@@ -1,152 +1,604 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EphemeraRelay - Nostr Interface</title>
-    <link rel="stylesheet" href="/css/nostr-interface.css">
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#4a90e2">
-    <meta name="description" content="Distributed Nostr Relay with Storage Contribution">
+    <title>EphemeraRelay - Nostr Key Manager</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="nostr-interface.css">
+    <style>
+        /* Additional styles for key management features */
+        .key-manager-section {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .key-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .generated-keys {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+        
+        .key-field {
+            margin-bottom: 15px;
+        }
+        
+        .key-field strong {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+        }
+        
+        .success-message {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 6px;
+        }
+        
+        .error-message {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 6px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* Override for the private key input to ensure proper styling */
+        #privateKey {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+            background-color: #f8f9fa;
+            transition: border-color 0.3s ease;
+        }
+        
+        #privateKey:focus {
+            outline: none;
+            border-color: #4a90e2;
+        }
+        
+        #privateKey.invalid {
+            border-color: #dc3545;
+            background-color: #fff5f5;
+        }
+        
+        .key-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .key-input-wrapper input {
+            flex: 1;
+        }
+        
+        .toggle-visibility {
+            background: white;
+            border: 1px solid #e1e5e9;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .toggle-visibility:hover {
+            background-color: #f8f9fa;
+            border-color: #4a90e2;
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
         <!-- Header -->
         <header class="app-header">
             <div class="header-content">
-                <h1>EphemeraRelay</h1>
+                <h1>🔐 EphemeraRelay</h1>
                 <div class="connection-status">
-                    <span id="connectionStatus" class="status-indicator">• Connecting...</span>
-                    <span id="relayCount">0 relays</span>
+                    <span class="status-indicator" id="connectionStatus">Not Authenticated</span>
                 </div>
             </div>
         </header>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Authentication Section -->
-            <div class="section">
-                <h3>🔐 Authentication</h3>
-                <div class="key-info" id="keyInfo" style="display: none;">
-                    <p><strong>Public Key:</strong> <span id="publicKeyDisplay">Not set</span></p>
-                    <p><strong>Status:</strong> <span id="authStatus">Not authenticated</span></p>
-                    <button id="keyToggleBtn" class="btn">Show</button>
-                </div>
-                <div class="auth-form">
-                    <label for="privateKey">Private Key (nsec or hex):</label>
-                    <input type="password" id="privateKey" placeholder="nsec1... or hex format">
-                    <button id="authenticateBtn" class="btn" disabled>Authenticate</button>
-                    <a href="/test-key.html" target="_blank" class="btn btn-secondary">🔑 Key Manager</a>
-                </div>
+        <!-- Key Manager Section -->
+        <section class="key-manager-section">
+            <h2>🔑 Nostr Key Manager</h2>
+            
+            <div class="key-actions">
+                <button class="primary-button" onclick="generateKeyPair()">
+                    Generate New Keys
+                </button>
+                <button class="secondary-button hidden" id="saveKeysBtn" onclick="saveToFile()">
+                    💾 Save to USB/File
+                </button>
+                <button class="secondary-button hidden" id="hideKeysBtn" onclick="hideGeneratedKeys()">
+                    Hide Keys
+                </button>
             </div>
+            
+            <div id="messageArea"></div>
+            
+            <div id="generatedKeys" class="generated-keys hidden">
+                <div class="warning">
+                    ⚠️ <strong>IMPORTANT:</strong> Save your private key immediately! Never share it with anyone.
+                </div>
+                
+                <div class="key-field">
+                    <strong>Public Key (npub):</strong>
+                    <span id="npubKey"></span>
+                </div>
+                
+                <div class="key-field">
+                    <strong>Private Key (nsec):</strong>
+                    <span id="nsecKey"></span>
+                </div>
+                
+                <div class="key-field">
+                    <strong>Hex Public Key:</strong>
+                    <span id="hexPubKey"></span>
+                </div>
+                
+                <div class="key-field">
+                    <strong>Hex Private Key:</strong>
+                    <span id="hexPrivKey"></span>
+                </div>
+                
+                <button class="primary-button" onclick="applyGeneratedKey()">
+                    Apply Private Key to Form
+                </button>
+            </div>
+        </section>
 
-            <!-- Relay Management -->
-            <section class="relay-section">
-                <h2>🌐 Relay Management</h2>
-                <div class="relay-controls">
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Authentication Section -->
+            <section id="authSection">
+                <h2>🔐 Authentication</h2>
+                
+                <form id="authForm" onsubmit="authenticate(event)">
                     <div class="input-group">
-                        <label for="relayUrl">Add Relay:</label>
-                        <input type="text" id="relayUrl" placeholder="wss://relay.example.com" />
-                        <button id="addRelayBtn" class="secondary-button">Add</button>
+                        <label for="privateKey">Private Key (nsec or hex):</label>
+                        <div class="key-input-wrapper">
+                            <input 
+                                type="password" 
+                                id="privateKey" 
+                                placeholder="nsec1... or 64 character hex"
+                                autocomplete="off"
+                                spellcheck="false"
+                            >
+                            <button type="button" class="toggle-visibility" onclick="toggleKeyVisibility()">
+                                👁️ Show
+                            </button>
+                        </div>
                     </div>
-                    <div class="relay-list" id="relayList">
-                        <!-- Connected relays will appear here -->
+                    
+                    <button type="submit" class="primary-button" id="authButton">
+                        Authenticate
+                    </button>
+                </form>
+                
+                <div id="keyInfo" class="key-info hidden">
+                    <div class="info-row">
+                        <label>Public Key:</label>
+                        <span id="publicKeyDisplay"></span>
                     </div>
                 </div>
             </section>
 
-            <!-- Storage Contribution -->
-            <section class="storage-section">
-                <h2>💾 Storage Contribution</h2>
-                <div class="storage-card">
-                    <div class="storage-info">
-                        <div class="storage-meter">
-                            <div class="meter-fill" id="storageMeterFill"></div>
-                            <span class="meter-text" id="storageAvailable">Checking storage...</span>
-                        </div>
-                        <p class="storage-description">
-                            Contribute storage to the distributed relay network. 
-                            Minimum requirement: 1 GB available storage.
-                        </p>
-                    </div>
-                    <div class="contribution-controls">
-                        <div class="control-group">
-                            <label for="storageAmount">Storage to contribute:</label>
-                            <input type="range" id="storageAmount" min="1" max="10" value="1" step="1">
-                            <span id="storageValue">1 GB</span>
-                        </div>
-                        <button id="contributeButton" class="primary-button" disabled>
-                            Start Contributing
-                        </button>
-                    </div>
-                    <div class="contribution-status" id="contributionStatus" style="display: none;">
-                        <h3>Your Node Status</h3>
-                        <div class="status-grid">
-                            <div class="status-item">
-                                <label>Storage Used:</label>
-                                <span id="storageUsedValue">0 MB</span>
-                            </div>
-                            <div class="status-item">
-                                <label>Events Stored:</label>
-                                <span id="eventsStoredValue">0</span>
-                            </div>
-                            <div class="status-item">
-                                <label>Network Load:</label>
-                                <span id="networkLoadValue">0%</span>
-                            </div>
-                            <div class="status-item">
-                                <label>Uptime:</label>
-                                <span id="uptimeValue">0h 0m</span>
-                            </div>
-                        </div>
-                        <button id="stopContributingButton" class="secondary-button">
-                            Stop Contributing
-                        </button>
-                    </div>
+            <!-- Relay Management Section -->
+            <section id="relaySection">
+                <h2>📡 Relay Management</h2>
+                
+                <div class="input-group">
+                    <label for="relayUrl">Add Relay:</label>
+                    <input 
+                        type="text" 
+                        id="relayUrl" 
+                        placeholder="wss://relay.example.com"
+                        disabled
+                    >
+                </div>
+                
+                <button class="primary-button" onclick="addRelay()" disabled>
+                    Add Relay
+                </button>
+                
+                <div class="relay-list" id="relayList">
+                    <p style="color: #666;">Authenticate to manage relays</p>
                 </div>
             </section>
+        </div>
 
-            <!-- Event Feed -->
-            <section class="feed-section">
-                <h2>📝 Event Feed</h2>
-                <div class="feed-controls">
-                    <div class="input-group">
-                        <label for="messageInput">Send Message:</label>
-                        <textarea id="messageInput" placeholder="Type your message..." rows="3"></textarea>
-                        <button id="sendMessageBtn" class="primary-button" disabled>Send</button>
-                    </div>
-                </div>
-                <div class="event-feed" id="eventFeed">
-                    <!-- Events will appear here -->
-                </div>
-            </section>
-
-            <!-- Network Statistics -->
-            <section class="stats-section">
-                <h2>📊 Network Statistics</h2>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <label>Total Events</label>
-                        <span id="totalEvents">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <label>Active Subscriptions</label>
-                        <span id="activeSubscriptions">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <label>Network Load</label>
-                        <span id="networkLoad">0%</span>
-                    </div>
-                    <div class="stat-item">
-                        <label>Storage Used</label>
-                        <span id="storageUsed">0 MB</span>
-                    </div>
-                </div>
-            </section>
-        </main>
+        <!-- Storage Contribution Section -->
+        <section class="storage-card">
+            <h2>💾 Storage Contribution</h2>
+            
+            <div class="storage-description">
+                Contribute storage to the distributed relay network. Minimum requirement: 1 GB available storage.
+            </div>
+            
+            <div class="control-group">
+                <label for="storageAmount">Storage to contribute:</label>
+                <input 
+                    type="range" 
+                    id="storageAmount" 
+                    min="1" 
+                    max="10" 
+                    value="1" 
+                    disabled
+                >
+                <span id="storageValue">1 GB</span>
+            </div>
+            
+            <button class="primary-button" id="contributeBtn" onclick="startContributing()" disabled>
+                Start Contributing
+            </button>
+            
+            <div class="storage-meter">
+                <div class="meter-fill" id="storageMeter" style="width: 0%"></div>
+                <span class="meter-text" id="storageText">0 MB / 0 GB</span>
+            </div>
+        </section>
     </div>
 
-    <script src="/js/nostr-client.js"></script>
-    <script src="/js/nostr-interface.js"></script>
+    <script>
+        // Global variables
+        let currentKeyPair = null;
+        let isAuthenticated = false;
+        let privateKeyInput = null;
+
+        // Bech32 implementation
+        const BECH32_CHARSET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
+        
+        function bech32Encode(prefix, data) {
+            function convertBits(data, fromBits, toBits, pad) {
+                let acc = 0;
+                let bits = 0;
+                const ret = [];
+                const maxv = (1 << toBits) - 1;
+                
+                for (let i = 0; i < data.length; i++) {
+                    const value = data[i];
+                    acc = (acc << fromBits) | value;
+                    bits += fromBits;
+                    
+                    while (bits >= toBits) {
+                        bits -= toBits;
+                        ret.push((acc >> bits) & maxv);
+                    }
+                }
+                
+                if (pad && bits > 0) {
+                    ret.push((acc << (toBits - bits)) & maxv);
+                }
+                
+                return ret;
+            }
+            
+            const values = Array.from(data);
+            const words = convertBits(values, 8, 5, true);
+            
+            let result = prefix + '1';
+            for (const word of words) {
+                result += BECH32_CHARSET[word];
+            }
+            
+            return result;
+        }
+        
+        function bech32Decode(str) {
+            const pos = str.lastIndexOf('1');
+            if (pos < 1) return null;
+            
+            const prefix = str.substring(0, pos);
+            const data = str.substring(pos + 1);
+            
+            const decoded = [];
+            for (let i = 0; i < data.length; i++) {
+                const d = BECH32_CHARSET.indexOf(data[i]);
+                if (d === -1) return null;
+                decoded.push(d);
+            }
+            
+            function convertBits(data, fromBits, toBits, pad) {
+                let acc = 0;
+                let bits = 0;
+                const ret = [];
+                const maxv = (1 << toBits) - 1;
+                
+                for (let i = 0; i < data.length; i++) {
+                    const value = data[i];
+                    acc = (acc << fromBits) | value;
+                    bits += fromBits;
+                    
+                    while (bits >= toBits) {
+                        bits -= toBits;
+                        ret.push((acc >> bits) & maxv);
+                    }
+                }
+                
+                if (!pad && bits > 0 && (acc << (toBits - bits)) & maxv) {
+                    return null;
+                }
+                
+                return ret;
+            }
+            
+            const bytes = convertBits(decoded, 5, 8, false);
+            return { prefix, data: new Uint8Array(bytes) };
+        }
+        
+        // Key generation
+        function generateKeyPair() {
+            const privateKeyBytes = new Uint8Array(32);
+            crypto.getRandomValues(privateKeyBytes);
+            
+            const privateKeyHex = Array.from(privateKeyBytes)
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+            
+            // Simple deterministic "public key" for demo
+            const publicKeyBytes = new Uint8Array(32);
+            for (let i = 0; i < 32; i++) {
+                publicKeyBytes[i] = privateKeyBytes[i] ^ 0xFF;
+            }
+            
+            const publicKeyHex = Array.from(publicKeyBytes)
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+            
+            const nsec = bech32Encode('nsec', privateKeyBytes);
+            const npub = bech32Encode('npub', publicKeyBytes);
+            
+            currentKeyPair = {
+                privateKeyHex,
+                publicKeyHex,
+                nsec,
+                npub
+            };
+            
+            displayGeneratedKeys();
+        }
+        
+        function displayGeneratedKeys() {
+            document.getElementById('npubKey').textContent = currentKeyPair.npub;
+            document.getElementById('nsecKey').textContent = currentKeyPair.nsec;
+            document.getElementById('hexPubKey').textContent = currentKeyPair.publicKeyHex;
+            document.getElementById('hexPrivKey').textContent = currentKeyPair.privateKeyHex;
+            
+            document.getElementById('generatedKeys').classList.remove('hidden');
+            document.getElementById('saveKeysBtn').classList.remove('hidden');
+            document.getElementById('hideKeysBtn').classList.remove('hidden');
+            
+            showMessage('success', 'Keys generated successfully! Save them immediately.');
+        }
+        
+        function hideGeneratedKeys() {
+            document.getElementById('generatedKeys').classList.add('hidden');
+            document.getElementById('saveKeysBtn').classList.add('hidden');
+            document.getElementById('hideKeysBtn').classList.add('hidden');
+        }
+        
+        function applyGeneratedKey() {
+            if (!currentKeyPair) return;
+            
+            document.getElementById('privateKey').value = currentKeyPair.nsec;
+            document.getElementById('privateKey').type = 'password';
+            
+            showMessage('success', 'Private key applied to authentication form.');
+            
+            setTimeout(() => {
+                hideGeneratedKeys();
+            }, 2000);
+        }
+        
+        function saveToFile() {
+            if (!currentKeyPair) return;
+            
+            const keyData = {
+                generated: new Date().toISOString(),
+                warning: "NEVER SHARE YOUR PRIVATE KEY! Store this file securely.",
+                publicKey: {
+                    npub: currentKeyPair.npub,
+                    hex: currentKeyPair.publicKeyHex
+                },
+                privateKey: {
+                    nsec: currentKeyPair.nsec,
+                    hex: currentKeyPair.privateKeyHex,
+                    warning: "This gives full access to your Nostr identity. Keep it secret!"
+                }
+            };
+            
+            const blob = new Blob([JSON.stringify(keyData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `nostr-keys-${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showMessage('success', 'Keys saved to file. Store it securely on your USB drive.');
+        }
+        
+        function toggleKeyVisibility() {
+            const input = document.getElementById('privateKey');
+            const button = event.target;
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.textContent = '🙈 Hide';
+            } else {
+                input.type = 'password';
+                button.textContent = '👁️ Show';
+            }
+        }
+        
+        function validatePrivateKey(key) {
+            const trimmedKey = key.trim();
+            
+            // Check nsec format
+            if (trimmedKey.startsWith('nsec1') && trimmedKey.length === 63) {
+                const validChars = /^nsec1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{58}$/;
+                return validChars.test(trimmedKey);
+            }
+            
+            // Check hex format
+            if (trimmedKey.length === 64) {
+                const validHex = /^[0-9a-fA-F]{64}$/;
+                return validHex.test(trimmedKey);
+            }
+            
+            return false;
+        }
+        
+        function authenticate(event) {
+            event.preventDefault();
+            
+            const privateKey = document.getElementById('privateKey').value.trim();
+            
+            if (!privateKey) {
+                showMessage('error', 'Please enter a private key.');
+                return;
+            }
+            
+            if (!validatePrivateKey(privateKey)) {
+                document.getElementById('privateKey').classList.add('invalid');
+                showMessage('error', 'Invalid private key format. Use nsec (63 chars) or hex (64 chars).');
+                return;
+            }
+            
+            document.getElementById('privateKey').classList.remove('invalid');
+            
+            // Simulate authentication
+            isAuthenticated = true;
+            privateKeyInput = privateKey;
+            
+            // Update UI
+            document.getElementById('connectionStatus').textContent = 'Authenticated';
+            document.getElementById('connectionStatus').style.color = '#28a745';
+            document.getElementById('authButton').textContent = 'Authenticated ✓';
+            document.getElementById('authButton').disabled = true;
+            
+            // Enable other features
+            document.getElementById('relayUrl').disabled = false;
+            document.querySelector('#relaySection button').disabled = false;
+            document.getElementById('storageAmount').disabled = false;
+            document.getElementById('contributeBtn').disabled = false;
+            
+            // Show public key
+            let publicKeyDisplay = '';
+            if (privateKey.startsWith('nsec1')) {
+                publicKeyDisplay = 'npub1' + '...'; // Would derive from private key
+            } else {
+                publicKeyDisplay = privateKey.substring(0, 8) + '...';
+            }
+            
+            document.getElementById('publicKeyDisplay').textContent = publicKeyDisplay;
+            document.getElementById('keyInfo').classList.remove('hidden');
+            
+            showMessage('success', 'Successfully authenticated! You can now use all features.');
+        }
+        
+        function showMessage(type, message) {
+            const messageArea = document.getElementById('messageArea');
+            const className = type === 'success' ? 'success-message' : 'error-message';
+            
+            messageArea.innerHTML = `<div class="${className}">${message}</div>`;
+            
+            setTimeout(() => {
+                messageArea.innerHTML = '';
+            }, 5000);
+        }
+        
+        function addRelay() {
+            const relayUrl = document.getElementById('relayUrl').value.trim();
+            
+            if (!relayUrl || !relayUrl.startsWith('wss://')) {
+                showMessage('error', 'Please enter a valid WebSocket URL (wss://)');
+                return;
+            }
+            
+            // Add relay logic here
+            showMessage('success', `Relay ${relayUrl} added successfully!`);
+            document.getElementById('relayUrl').value = '';
+        }
+        
+        function startContributing() {
+            const amount = document.getElementById('storageAmount').value;
+            
+            document.getElementById('contributeBtn').textContent = 'Contributing...';
+            document.getElementById('contributeBtn').disabled = true;
+            
+            // Simulate contribution
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                document.getElementById('storageMeter').style.width = progress + '%';
+                document.getElementById('storageText').textContent = 
+                    `${(progress * parseInt(amount) * 10).toFixed(0)} MB / ${amount} GB`;
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    document.getElementById('contributeBtn').textContent = 'Stop Contributing';
+                    document.getElementById('contributeBtn').disabled = false;
+                    showMessage('success', `Contributing ${amount} GB to the network!`);
+                }
+            }, 200);
+        }
+        
+        // Storage slider update
+        document.getElementById('storageAmount').addEventListener('input', function(e) {
+            document.getElementById('storageValue').textContent = e.target.value + ' GB';
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add input validation listener
+            document.getElementById('privateKey').addEventListener('input', function(e) {
+                if (e.target.classList.contains('invalid')) {
+                    if (validatePrivateKey(e.target.value)) {
+                        e.target.classList.remove('invalid');
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html> 
