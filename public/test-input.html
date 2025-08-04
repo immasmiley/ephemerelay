@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Input Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .input-group { margin: 20px 0; }
+        input { padding: 10px; margin: 5px; border: 2px solid #ccc; }
+        input.valid { border-color: green; }
+        input.invalid { border-color: red; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .key-input-container { display: flex; align-items: center; }
+        .key-toggle-btn { margin-left: 10px; padding: 8px 12px; background: #f8f9fa; border: 1px solid #ccc; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Input Test Page</h1>
+    
+    <div class="input-group">
+        <label>Test Input (should allow pasting):</label>
+        <div class="key-input-container">
+            <input type="text" id="testInput" placeholder="Try pasting here..." />
+            <button type="button" id="toggleBtn" class="key-toggle-btn">Show</button>
+        </div>
+    </div>
+    
+    <div class="input-group">
+        <label>Nsec Key Test:</label>
+        <div class="key-input-container">
+            <input type="text" id="nsecInput" placeholder="Paste nsec key here..." />
+            <button type="button" id="validateBtn" class="key-toggle-btn">Validate</button>
+        </div>
+    </div>
+    
+    <div id="result"></div>
+    
+    <script>
+        // Test input functionality
+        const testInput = document.getElementById('testInput');
+        const nsecInput = document.getElementById('nsecInput');
+        const toggleBtn = document.getElementById('toggleBtn');
+        const validateBtn = document.getElementById('validateBtn');
+        const result = document.getElementById('result');
+        
+        // Toggle functionality
+        toggleBtn.addEventListener('click', () => {
+            if (testInput.type === 'text') {
+                testInput.type = 'password';
+                toggleBtn.textContent = 'Show';
+            } else {
+                testInput.type = 'text';
+                toggleBtn.textContent = 'Hide';
+            }
+        });
+        
+        // Validation functionality
+        function isValidNsecKey(key) {
+            return /^nsec1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{58}$/.test(key.trim());
+        }
+        
+        validateBtn.addEventListener('click', () => {
+            const key = nsecInput.value;
+            const isValid = isValidNsecKey(key);
+            
+            nsecInput.classList.remove('valid', 'invalid');
+            nsecInput.classList.add(isValid ? 'valid' : 'invalid');
+            
+            result.innerHTML = `
+                <h3>Validation Result:</h3>
+                <p><strong>Key:</strong> ${key}</p>
+                <p><strong>Length:</strong> ${key.length}</p>
+                <p><strong>Valid:</strong> ${isValid ? '✅ Yes' : '❌ No'}</p>
+            `;
+        });
+        
+        // Test pasting
+        testInput.addEventListener('paste', (e) => {
+            console.log('Paste event detected');
+            setTimeout(() => {
+                console.log('Input value after paste:', testInput.value);
+            }, 100);
+        });
+        
+        nsecInput.addEventListener('paste', (e) => {
+            console.log('Nsec paste event detected');
+            setTimeout(() => {
+                console.log('Nsec input value after paste:', nsecInput.value);
+            }, 100);
+        });
+        
+        console.log('Test page loaded successfully');
+    </script>
+</body>
+</html> 

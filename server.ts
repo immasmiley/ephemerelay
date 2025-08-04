@@ -20,6 +20,124 @@ function gc() {
   }
 }
 
+// Track contributing nodes
+const contributingNodes = new Map();
+
+// Node registration schema
+const nodeRegistrationSchema = z.object({
+  storageAmount: z.number().min(1 * 1024 * 1024 * 1024), // Minimum 1GB
+  endpoint: z.string(),
+  pubkey: z.string().min(1)
+});
+
+// MIME types for serving static files
+const MIME_TYPES: Record<string, string> = {
+  ".html": "text/html",
+  ".js": "text/javascript",
+  ".css": "text/css",
+  ".json": "application/json",
+  ".svg": "image/svg+xml",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".ico": "image/x-icon"
+};
+
+async function serveStaticFile(filePath: string): Promise<Response> {
+  try {
+    const ext = filePath.substring(filePath.lastIndexOf('.'));
+    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+    const file = await Deno.readFile(`./public${filePath}`);
+    return new Response(file, { headers: { 'Content-Type': contentType } });
+  } catch (error) {
+    console.error(`Error serving static file ${filePath}:`, error);
+    return new Response('File not found', { status: 404 });
+  }
+}
+
+async function handleNodeRegistration(req: Request): Promise<Response> {
+  try {
+    const data = await req.json();
+    const validatedData = nodeRegistrationSchema.parse(data);
+    
+    const nodeId = crypto.randomUUID();
+    contributingNodes.set(nodeId, {
+      ...validatedData,
+      startTime: Date.now(),
+      usedStorage: 0,
+      eventsStored: 0,
+      networkLoad: 0
+    });
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      nodeId 
+    }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ 
+      success: false, 
+      error: error.message 
+    }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
+
+async function handleNodeUnregistration(req: Request): Promise<Response> {
+  const nodeId = req.headers.get('X-Node-ID');
+  
+  if (!nodeId || !contributingNodes.has(nodeId)) {
+    return new Response(JSON.stringify({
+      success: false,
+      error: 'Invalid node ID'
+    }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  contributingNodes.delete(nodeId);
+  return new Response(JSON.stringify({ success: true }), {
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
+
+function getNodeStatus(req: Request): Response {
+  const nodeId = req.headers.get('X-Node-ID');
+  
+  if (!nodeId || !contributingNodes.has(nodeId)) {
+    return new Response(JSON.stringify({
+      success: false,
+      error: 'Invalid node ID'
+    }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  const node = contributingNodes.get(nodeId);
+  const uptime = Date.now() - node.startTime;
+
+  // Simulate some activity
+  node.usedStorage = Math.min(
+    node.storageAmount,
+    node.usedStorage + Math.random() * 1024 * 1024
+  );
+  node.eventsStored += Math.floor(Math.random() * 10);
+  node.networkLoad = Math.min(100, node.networkLoad + Math.random() * 5);
+
+  return new Response(JSON.stringify({
+    usedStorage: node.usedStorage,
+    eventsStored: node.eventsStored,
+    networkLoad: node.networkLoad,
+    uptime
+  }), {
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
+
 function connectStream(socket: WebSocket): void {
   const subs = new Map<string, Listener>();
 
@@ -90,17 +208,60 @@ function connectStream(socket: WebSocket): void {
   };
 }
 
-function handleRequest(req: Request): Response {
-  const upgrade = req.headers.get('upgrade') || '';
-
-  if (upgrade.toLowerCase() != 'websocket') {
-    return new Response('Please use a Nostr client to connect.');
+async function handleRequest(req: Request): Promise<Response> {
+  const url = new URL(req.url);
+  
+  // Handle WebSocket upgrade for Nostr protocol
+  if (req.headers.get("upgrade") === "websocket") {
+    const { socket, response } = Deno.upgradeWebSocket(req);
+    connectStream(socket);
+    return response;
   }
 
-  const { socket, response } = Deno.upgradeWebSocket(req);
+  // Handle HTTP endpoints
+  switch (url.pathname) {
+    case '/api/nodes/register':
+      if (req.method === 'POST') {
+        return handleNodeRegistration(req);
+      }
+      break;
 
-  connectStream(socket);
-  return response;
+    case '/api/nodes/unregister':
+      if (req.method === 'POST') {
+        return handleNodeUnregistration(req);
+      }
+      break;
+
+    case '/api/nodes/status':
+      if (req.method === 'GET') {
+        return getNodeStatus(req);
+      }
+      break;
+
+    case '/':
+      return new Response(await Deno.readFile('./public/index.html'), {
+        headers: { 'Content-Type': 'text/html' }
+      });
+
+    case '/nostr':
+      return new Response(await Deno.readFile('./public/nostr-interface.html'), {
+        headers: { 
+          'Content-Type': 'text/html',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+
+    default:
+      // Serve static files
+      if (url.pathname.match(/\.(html|css|js|json|svg|png|jpg|ico)$/)) {
+        return serveStaticFile(url.pathname);
+      }
+      break;
+  }
+
+  return new Response('Not found', { status: 404 });
 }
 
 const jsonSchema = z.string().transform((value, ctx) => {
@@ -137,4 +298,11 @@ const relayMsgSchema = z.union([
   z.tuple([z.literal('CLOSE'), z.string()]),
 ]);
 
-serve(handleRequest, { port: 5000 });
+console.log('🚀 Starting EphemeraRelay server on http://localhost:5001');
+
+serve(handleRequest, { 
+  port: 5001,
+  onListen: ({ port, hostname }) => {
+    console.log(`Server running at http://${hostname}:${port}/`);
+  }
+});

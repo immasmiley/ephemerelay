@@ -1,0 +1,72 @@
+{
+    "name": "EphemeraRelay",
+    "short_name": "EphemeraRelay",
+    "description": "A privacy-preserving distributed Nostr relay",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#f5f6fa",
+    "theme_color": "#4a90e2",
+    "icons": [
+        {
+            "src": "/icons/icon-192x192.svg",
+            "sizes": "192x192",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icons/icon-512x512.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Contribute Storage",
+            "short_name": "Contribute",
+            "description": "Start contributing storage to the network",
+            "url": "/?action=contribute",
+            "icons": [
+                {
+                    "src": "/icons/contribute.svg",
+                    "sizes": "192x192",
+                    "type": "image/svg+xml"
+                }
+            ]
+        },
+        {
+            "name": "Network Stats",
+            "short_name": "Stats",
+            "description": "View network statistics",
+            "url": "/?action=stats",
+            "icons": [
+                {
+                    "src": "/icons/stats.svg",
+                    "sizes": "192x192",
+                    "type": "image/svg+xml"
+                }
+            ]
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "/screenshots/home.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "Home screen of EphemeraRelay"
+        },
+        {
+            "src": "/screenshots/contribute.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "Storage contribution interface"
+        }
+    ],
+    "categories": ["utilities", "social"],
+    "dir": "ltr",
+    "lang": "en",
+    "orientation": "any",
+    "prefer_related_applications": false
+} 

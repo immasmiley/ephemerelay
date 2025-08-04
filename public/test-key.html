@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Key Validation Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        input { width: 100%; padding: 10px; margin: 10px 0; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Key Validation Test</h1>
+    
+    <div>
+        <label>Enter your nsec key:</label>
+        <input type="text" id="keyInput" placeholder="nsec1..." value="nsec1rugv94sqvdye9ks4q4cawyfav33csuumnza8t4xjxsj7uj5g3ytsgq6cvx">
+        <button onclick="testKey()">Test Key</button>
+    </div>
+    
+    <div id="result"></div>
+    
+    <script>
+        function isValidNsecKey(key) {
+            console.log('Testing key:', key);
+            console.log('Length:', key.length);
+            console.log('Characters:', Array.from(key).map(c => c.charCodeAt(0)));
+            
+            const isValid = /^nsec1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{58}$/.test(key);
+            console.log('Regex test result:', isValid);
+            
+            return isValid;
+        }
+        
+        function testKey() {
+            const key = document.getElementById('keyInput').value.trim();
+            const resultDiv = document.getElementById('result');
+            
+            console.log('=== KEY VALIDATION TEST ===');
+            console.log('Input key:', key);
+            console.log('Key length:', key.length);
+            console.log('Expected length: 63');
+            console.log('Starts with nsec1:', key.startsWith('nsec1'));
+            
+            const isValid = isValidNsecKey(key);
+            
+            let html = '<div class="result ' + (isValid ? 'success' : 'error') + '">';
+            html += '<h3>' + (isValid ? '✅ Key Valid' : '❌ Key Invalid') + '</h3>';
+            html += '<p><strong>Key:</strong> ' + key + '</p>';
+            html += '<p><strong>Length:</strong> ' + key.length + ' (expected: 63)</p>';
+            html += '<p><strong>Starts with nsec1:</strong> ' + key.startsWith('nsec1') + '</p>';
+            html += '<p><strong>Regex test:</strong> ' + isValid + '</p>';
+            
+            if (!isValid) {
+                html += '<p><strong>Character codes:</strong> ' + Array.from(key).map(c => c.charCodeAt(0)).join(', ') + '</p>';
+            }
+            
+            html += '</div>';
+            
+            resultDiv.innerHTML = html;
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            testKey();
+        };
+    </script>
+</body>
+</html> 

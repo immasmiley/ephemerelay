@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nsec Key Test</title>
+</head>
+<body>
+    <h1>Nsec Key Test</h1>
+    <div id="result"></div>
+    
+    <script>
+        const testNsec = "nsec1rugv94sqvdye9ks4q4cawyfav33csuumnza8t4xjxsj7uj5g3ytsgq6cvx";
+        
+        function isValidNsecKey(key) {
+            return /^nsec1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{58}$/.test(key);
+        }
+        
+        async function nsecToHex(nsec) {
+            try {
+                if (!isValidNsecKey(nsec)) throw new Error('Invalid nsec format');
+                const charset = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
+                const dataPart = nsec.slice(5);
+                const values = [];
+                for (let ch of dataPart) {
+                    const idx = charset.indexOf(ch);
+                    if (idx === -1) throw new Error('Invalid bech32 character');
+                    values.push(idx);
+                }
+                const dataWords = values.slice(0, -6);
+                let bits = 0;
+                let buffer = 0;
+                const bytes = [];
+                for (const word of dataWords) {
+                    buffer = (buffer << 5) | word;
+                    bits += 5;
+                    if (bits >= 8) {
+                        bits -= 8;
+                        bytes.push((buffer >> bits) & 0xff);
+                    }
+                }
+                const privBytes = bytes.slice(0, 32);
+                if (privBytes.length !== 32) throw new Error('Invalid decoded length');
+                return Array.from(privBytes)
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join('');
+            } catch (error) {
+                console.error('Error converting nsec to hex:', error);
+                throw error;
+            }
+        }
+        
+        async function testKey() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>Testing nsec key: ' + testNsec + '</p>';
+            resultDiv.innerHTML += '<p>Valid format: ' + isValidNsecKey(testNsec) + '</p>';
+            
+            try {
+                const hex = await nsecToHex(testNsec);
+                resultDiv.innerHTML += '<p>Converted to hex: ' + hex + '</p>';
+                resultDiv.innerHTML += '<p>Hex length: ' + hex.length + '</p>';
+                resultDiv.innerHTML += '<p>Valid hex format: ' + /^[0-9a-fA-F]{64}$/.test(hex) + '</p>';
+            } catch (error) {
+                resultDiv.innerHTML += '<p style="color: red;">Error: ' + error.message + '</p>';
+            }
+        }
+        
+        testKey();
+    </script>
+</body>
+</html> 

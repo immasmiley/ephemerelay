@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EphemeraRelay - Nostr Interface</title>
+    <link rel="stylesheet" href="/css/nostr-interface.css">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#4a90e2">
+    <meta name="description" content="Distributed Nostr Relay with Storage Contribution">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1>EphemeraRelay</h1>
+                <div class="connection-status">
+                    <span id="connectionStatus" class="status-indicator">• Connecting...</span>
+                    <span id="relayCount">0 relays</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Authentication Section -->
+            <section class="auth-section">
+                <h2>🔐 Authentication</h2>
+                <div class="auth-form">
+                    <div class="input-group">
+                        <label for="privateKey">Private Key (nsec or hex):</label>
+                        <div class="key-input-container">
+                            <input type="text" id="privateKey" placeholder="Enter your private key" autocomplete="off" />
+                            <button type="button" id="keyToggleBtn" class="key-toggle-btn">Show</button>
+                        </div>
+                    </div>
+                    <div class="key-info" id="keyInfo" style="display: none;">
+                        <div class="info-row">
+                            <label>Public Key:</label>
+                            <span id="publicKeyDisplay"></span>
+                        </div>
+                        <div class="info-row">
+                            <label>Status:</label>
+                            <span id="authStatus">Not authenticated</span>
+                        </div>
+                    </div>
+                    <button id="authenticateBtn" class="primary-button" disabled>Authenticate</button>
+                </div>
+            </section>
+
+            <!-- Relay Management -->
+            <section class="relay-section">
+                <h2>🌐 Relay Management</h2>
+                <div class="relay-controls">
+                    <div class="input-group">
+                        <label for="relayUrl">Add Relay:</label>
+                        <input type="text" id="relayUrl" placeholder="wss://relay.example.com" />
+                        <button id="addRelayBtn" class="secondary-button">Add</button>
+                    </div>
+                    <div class="relay-list" id="relayList">
+                        <!-- Connected relays will appear here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Storage Contribution -->
+            <section class="storage-section">
+                <h2>💾 Storage Contribution</h2>
+                <div class="storage-card">
+                    <div class="storage-info">
+                        <div class="storage-meter">
+                            <div class="meter-fill" id="storageMeterFill"></div>
+                            <span class="meter-text" id="storageAvailable">Checking storage...</span>
+                        </div>
+                        <p class="storage-description">
+                            Contribute storage to the distributed relay network. 
+                            Minimum requirement: 1 GB available storage.
+                        </p>
+                    </div>
+                    <div class="contribution-controls">
+                        <div class="control-group">
+                            <label for="storageAmount">Storage to contribute:</label>
+                            <input type="range" id="storageAmount" min="1" max="10" value="1" step="1">
+                            <span id="storageValue">1 GB</span>
+                        </div>
+                        <button id="contributeButton" class="primary-button" disabled>
+                            Start Contributing
+                        </button>
+                    </div>
+                    <div class="contribution-status" id="contributionStatus" style="display: none;">
+                        <h3>Your Node Status</h3>
+                        <div class="status-grid">
+                            <div class="status-item">
+                                <label>Storage Used:</label>
+                                <span id="storageUsedValue">0 MB</span>
+                            </div>
+                            <div class="status-item">
+                                <label>Events Stored:</label>
+                                <span id="eventsStoredValue">0</span>
+                            </div>
+                            <div class="status-item">
+                                <label>Network Load:</label>
+                                <span id="networkLoadValue">0%</span>
+                            </div>
+                            <div class="status-item">
+                                <label>Uptime:</label>
+                                <span id="uptimeValue">0h 0m</span>
+                            </div>
+                        </div>
+                        <button id="stopContributingButton" class="secondary-button">
+                            Stop Contributing
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Event Feed -->
+            <section class="feed-section">
+                <h2>📝 Event Feed</h2>
+                <div class="feed-controls">
+                    <div class="input-group">
+                        <label for="messageInput">Send Message:</label>
+                        <textarea id="messageInput" placeholder="Type your message..." rows="3"></textarea>
+                        <button id="sendMessageBtn" class="primary-button" disabled>Send</button>
+                    </div>
+                </div>
+                <div class="event-feed" id="eventFeed">
+                    <!-- Events will appear here -->
+                </div>
+            </section>
+
+            <!-- Network Statistics -->
+            <section class="stats-section">
+                <h2>📊 Network Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <label>Total Events</label>
+                        <span id="totalEvents">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <label>Active Subscriptions</label>
+                        <span id="activeSubscriptions">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <label>Network Load</label>
+                        <span id="networkLoad">0%</span>
+                    </div>
+                    <div class="stat-item">
+                        <label>Storage Used</label>
+                        <span id="storageUsed">0 MB</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/js/nostr-client.js"></script>
+    <script src="/js/nostr-interface.js"></script>
+</body>
+</html> 

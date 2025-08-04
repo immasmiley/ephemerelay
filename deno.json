@@ -1,7 +1,15 @@
 {
   "tasks": {
     "dev": "deno run --allow-net --watch server.ts",
-    "test": "deno test"
+    "test": "deno test --allow-net",
+    "start": "deno run --allow-net server.ts"
+  },
+  "imports": {
+    "nostr-tools": "npm:nostr-tools@^1.7.4"
+  },
+  "compilerOptions": {
+    "lib": ["deno.ns", "dom"],
+    "types": ["deno.ns"]
   },
   "lint": {
     "files": {
