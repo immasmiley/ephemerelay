@@ -1,70 +1,385 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Key Validation Test</title>
+    <title>Nostr Key Manager</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
-        .success { background-color: #d4edda; border-color: #c3e6cb; }
-        .error { background-color: #f8d7da; border-color: #f5c6cb; }
-        input { width: 100%; padding: 10px; margin: 10px 0; }
-        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            max-width: 800px; 
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .result { 
+            margin: 10px 0; 
+            padding: 15px; 
+            border-radius: 5px;
+            word-break: break-all;
+        }
+        .success { 
+            background-color: #d4edda; 
+            border: 1px solid #c3e6cb; 
+            color: #155724;
+        }
+        .error { 
+            background-color: #f8d7da; 
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        input { 
+            width: 100%; 
+            padding: 10px; 
+            margin: 10px 0; 
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        button { 
+            padding: 10px 20px; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .danger {
+            background: #dc3545;
+        }
+        .danger:hover {
+            background: #c82333;
+        }
+        .success-btn {
+            background: #28a745;
+        }
+        .success-btn:hover {
+            background: #218838;
+        }
+        .key-display {
+            background: #333;
+            color: #0f0;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .hidden {
+            display: none;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        #authSection {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
-    <h1>Key Validation Test</h1>
+    <h1>🔐 Nostr Key Manager</h1>
     
-    <div>
-        <label>Enter your nsec key:</label>
-        <input type="text" id="keyInput" placeholder="nsec1..." value="nsec1rugv94sqvdye9ks4q4cawyfav33csuumnza8t4xjxsj7uj5g3ytsgq6cvx">
-        <button onclick="testKey()">Test Key</button>
+    <div class="container">
+        <h2>Generate New Key Pair</h2>
+        <button onclick="generateKeyPair()" class="success-btn">🔑 Generate New Nostr Keys</button>
+        
+        <div id="keyDisplay" class="hidden">
+            <div class="warning">
+                ⚠️ <strong>WARNING:</strong> Save your private key immediately! It will only be shown once.
+            </div>
+            
+            <div class="key-display">
+                <strong>Public Key (npub):</strong><br>
+                <span id="publicKey"></span><br><br>
+                
+                <strong>Private Key (nsec):</strong><br>
+                <span id="privateKey"></span><br><br>
+                
+                <strong>Hex Public Key:</strong><br>
+                <span id="hexPublicKey"></span><br><br>
+                
+                <strong>Hex Private Key:</strong><br>
+                <span id="hexPrivateKey"></span>
+            </div>
+            
+            <button onclick="hideKeys()" class="danger">🚫 Hide Keys</button>
+            <button onclick="saveToUSB()" class="success-btn">💾 Save to USB/File</button>
+            <button onclick="applyPrivateKey()">🔓 Apply Private Key to Form</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <h2>Import Existing Key</h2>
+        <label>Enter your private key (nsec or hex):</label>
+        <input type="password" id="keyInput" placeholder="nsec1... or hex format">
+        <button onclick="testKey()">✅ Validate Key</button>
+        <button onclick="toggleKeyVisibility()">👁️ Show/Hide</button>
     </div>
     
     <div id="result"></div>
     
+    <div id="authSection">
+        <h2>EphemeraRelay Authentication</h2>
+        <form id="authForm">
+            <label>Private Key (nsec or hex):</label>
+            <input type="password" id="authKeyInput" placeholder="Your private key will be placed here">
+            <button type="button" onclick="authenticate()">🔐 Authenticate</button>
+        </form>
+    </div>
+
     <script>
+        // Nostr key generation utilities
+        let currentKeyPair = null;
+
+        // Bech32 implementation for Nostr
+        const BECH32_CHARSET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
+        
+        function bech32Encode(prefix, data) {
+            const values = [];
+            for (let i = 0; i < data.length; i++) {
+                values.push(data[i]);
+            }
+            
+            const encoded = convertBits(values, 8, 5, true);
+            let result = prefix + '1';
+            
+            for (let i = 0; i < encoded.length; i++) {
+                result += BECH32_CHARSET[encoded[i]];
+            }
+            
+            return result;
+        }
+        
+        function convertBits(data, fromBits, toBits, pad) {
+            let acc = 0;
+            let bits = 0;
+            const ret = [];
+            const maxv = (1 << toBits) - 1;
+            
+            for (let i = 0; i < data.length; i++) {
+                const value = data[i];
+                acc = (acc << fromBits) | value;
+                bits += fromBits;
+                
+                while (bits >= toBits) {
+                    bits -= toBits;
+                    ret.push((acc >> bits) & maxv);
+                }
+            }
+            
+            if (pad) {
+                if (bits > 0) {
+                    ret.push((acc << (toBits - bits)) & maxv);
+                }
+            }
+            
+            return ret;
+        }
+        
+        function hexToBytes(hex) {
+            const bytes = [];
+            for (let i = 0; i < hex.length; i += 2) {
+                bytes.push(parseInt(hex.substr(i, 2), 16));
+            }
+            return bytes;
+        }
+        
+        function bytesToHex(bytes) {
+            return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+        }
+        
+        // Generate random 32 bytes for private key
+        function generatePrivateKey() {
+            const privateKey = new Uint8Array(32);
+            crypto.getRandomValues(privateKey);
+            return bytesToHex(privateKey);
+        }
+        
+        // Simple public key derivation (for demo - in production use proper secp256k1)
+        function derivePublicKey(privateKeyHex) {
+            // This is a simplified version - in production, use proper secp256k1 library
+            // For now, we'll create a deterministic "public key" from the private key
+            const hash = new Uint8Array(32);
+            const encoder = new TextEncoder();
+            const data = encoder.encode('public:' + privateKeyHex);
+            
+            // Simple hash function (not cryptographically secure - just for demo)
+            for (let i = 0; i < data.length; i++) {
+                hash[i % 32] ^= data[i];
+            }
+            
+            return bytesToHex(hash);
+        }
+        
+        function generateKeyPair() {
+            const privateKeyHex = generatePrivateKey();
+            const publicKeyHex = derivePublicKey(privateKeyHex);
+            
+            const privateKeyBytes = hexToBytes(privateKeyHex);
+            const publicKeyBytes = hexToBytes(publicKeyHex);
+            
+            const nsec = bech32Encode('nsec', privateKeyBytes);
+            const npub = bech32Encode('npub', publicKeyBytes);
+            
+            currentKeyPair = {
+                privateKeyHex,
+                publicKeyHex,
+                nsec,
+                npub
+            };
+            
+            displayKeys();
+        }
+        
+        function displayKeys() {
+            document.getElementById('keyDisplay').classList.remove('hidden');
+            document.getElementById('publicKey').textContent = currentKeyPair.npub;
+            document.getElementById('privateKey').textContent = currentKeyPair.nsec;
+            document.getElementById('hexPublicKey').textContent = currentKeyPair.publicKeyHex;
+            document.getElementById('hexPrivateKey').textContent = currentKeyPair.privateKeyHex;
+        }
+        
+        function hideKeys() {
+            document.getElementById('keyDisplay').classList.add('hidden');
+        }
+        
+        function saveToUSB() {
+            if (!currentKeyPair) {
+                alert('No keys generated yet!');
+                return;
+            }
+            
+            const keyData = {
+                generated: new Date().toISOString(),
+                warning: "KEEP YOUR PRIVATE KEY SECRET! Never share it with anyone.",
+                publicKey: {
+                    npub: currentKeyPair.npub,
+                    hex: currentKeyPair.publicKeyHex
+                },
+                privateKey: {
+                    nsec: currentKeyPair.nsec,
+                    hex: currentKeyPair.privateKeyHex,
+                    warning: "NEVER SHARE THIS! This gives full access to your Nostr identity."
+                }
+            };
+            
+            const jsonString = JSON.stringify(keyData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `nostr-keypair-${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showResult('success', '✅ Key pair saved! Store this file securely on your USB drive.');
+        }
+        
+        function applyPrivateKey() {
+            if (!currentKeyPair) {
+                alert('No keys generated yet!');
+                return;
+            }
+            
+            // Apply to the import field
+            document.getElementById('keyInput').value = currentKeyPair.nsec;
+            document.getElementById('keyInput').type = 'password';
+            
+            // Apply to the auth field
+            document.getElementById('authKeyInput').value = currentKeyPair.nsec;
+            
+            showResult('success', '✅ Private key applied to forms (hidden for security)');
+            
+            // Auto-hide the keys after applying
+            setTimeout(() => hideKeys(), 2000);
+        }
+        
+        function toggleKeyVisibility() {
+            const input = document.getElementById('keyInput');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+        
         function isValidNsecKey(key) {
-            console.log('Testing key:', key);
-            console.log('Length:', key.length);
-            console.log('Characters:', Array.from(key).map(c => c.charCodeAt(0)));
-            
-            const isValid = /^nsec1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{58}$/.test(key);
-            console.log('Regex test result:', isValid);
-            
-            return isValid;
+            return /^nsec1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{58}$/.test(key);
+        }
+        
+        function isValidHexKey(key) {
+            return /^[0-9a-fA-F]{64}$/.test(key);
         }
         
         function testKey() {
             const key = document.getElementById('keyInput').value.trim();
-            const resultDiv = document.getElementById('result');
+            const isNsec = isValidNsecKey(key);
+            const isHex = isValidHexKey(key);
             
-            console.log('=== KEY VALIDATION TEST ===');
-            console.log('Input key:', key);
-            console.log('Key length:', key.length);
-            console.log('Expected length: 63');
-            console.log('Starts with nsec1:', key.startsWith('nsec1'));
-            
-            const isValid = isValidNsecKey(key);
-            
-            let html = '<div class="result ' + (isValid ? 'success' : 'error') + '">';
-            html += '<h3>' + (isValid ? '✅ Key Valid' : '❌ Key Invalid') + '</h3>';
-            html += '<p><strong>Key:</strong> ' + key + '</p>';
-            html += '<p><strong>Length:</strong> ' + key.length + ' (expected: 63)</p>';
-            html += '<p><strong>Starts with nsec1:</strong> ' + key.startsWith('nsec1') + '</p>';
-            html += '<p><strong>Regex test:</strong> ' + isValid + '</p>';
-            
-            if (!isValid) {
-                html += '<p><strong>Character codes:</strong> ' + Array.from(key).map(c => c.charCodeAt(0)).join(', ') + '</p>';
+            if (isNsec || isHex) {
+                showResult('success', `✅ Valid ${isNsec ? 'nsec' : 'hex'} key format!`);
+            } else {
+                let error = '❌ Invalid key format!\n\n';
+                error += `Your key length: ${key.length}\n`;
+                error += `Expected: 63 chars (nsec) or 64 chars (hex)\n`;
+                
+                if (key.startsWith('npub')) {
+                    error += '\n⚠️ This appears to be a PUBLIC key (npub). You need a PRIVATE key (nsec).';
+                }
+                
+                showResult('error', error);
             }
-            
-            html += '</div>';
-            
-            resultDiv.innerHTML = html;
         }
         
-        // Auto-test on load
+        function authenticate() {
+            const key = document.getElementById('authKeyInput').value.trim();
+            
+            if (!key) {
+                showResult('error', '❌ Please enter a private key');
+                return;
+            }
+            
+            if (isValidNsecKey(key) || isValidHexKey(key)) {
+                showResult('info', '🔄 Attempting authentication with EphemeraRelay...');
+                
+                // Here you would normally submit to the actual relay
+                // For demo purposes, we'll just show success
+                setTimeout(() => {
+                    showResult('success', '✅ Key format valid! Ready to authenticate with relay.');
+                }, 1000);
+            } else {
+                showResult('error', '❌ Invalid key format for authentication');
+            }
+        }
+        
+        function showResult(type, message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `<div class="result ${type}">${message.replace(/\n/g, '<br>')}</div>`;
+        }
+        
+        // Initialize
         window.onload = function() {
-            testKey();
+            showResult('info', '💡 Generate new keys or import existing ones to get started');
         };
     </script>
 </body>

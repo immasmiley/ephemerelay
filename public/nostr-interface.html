@@ -25,29 +25,20 @@
         <!-- Main Content -->
         <main class="main-content">
             <!-- Authentication Section -->
-            <section class="auth-section">
-                <h2>🔐 Authentication</h2>
-                <div class="auth-form">
-                    <div class="input-group">
-                        <label for="privateKey">Private Key (nsec or hex):</label>
-                        <div class="key-input-container">
-                            <input type="text" id="privateKey" placeholder="Enter your private key" autocomplete="off" />
-                            <button type="button" id="keyToggleBtn" class="key-toggle-btn">Show</button>
-                        </div>
-                    </div>
-                    <div class="key-info" id="keyInfo" style="display: none;">
-                        <div class="info-row">
-                            <label>Public Key:</label>
-                            <span id="publicKeyDisplay"></span>
-                        </div>
-                        <div class="info-row">
-                            <label>Status:</label>
-                            <span id="authStatus">Not authenticated</span>
-                        </div>
-                    </div>
-                    <button id="authenticateBtn" class="primary-button" disabled>Authenticate</button>
+            <div class="section">
+                <h3>🔐 Authentication</h3>
+                <div class="key-info" id="keyInfo" style="display: none;">
+                    <p><strong>Public Key:</strong> <span id="publicKeyDisplay">Not set</span></p>
+                    <p><strong>Status:</strong> <span id="authStatus">Not authenticated</span></p>
+                    <button id="keyToggleBtn" class="btn">Show</button>
                 </div>
-            </section>
+                <div class="auth-form">
+                    <label for="privateKey">Private Key (nsec or hex):</label>
+                    <input type="password" id="privateKey" placeholder="nsec1... or hex format">
+                    <button id="authenticateBtn" class="btn" disabled>Authenticate</button>
+                    <a href="/test-key.html" target="_blank" class="btn btn-secondary">🔑 Key Manager</a>
+                </div>
+            </div>
 
             <!-- Relay Management -->
             <section class="relay-section">

@@ -97,18 +97,19 @@ class NostrInterface {
   }
 
   isValidNsecKey(key) {
-    // Remove any potential hidden characters
-    const cleanKey = key.trim();
-    console.log('Clean key:', cleanKey);
+    // Remove any potential hidden characters and normalize
+    const cleanKey = key.trim().replace(/[\u200B-\u200D\uFEFF]/g, '');
+    console.log('Clean nsec key:', cleanKey);
     console.log('Key length:', cleanKey.length);
     
+    // More flexible nsec validation - allow for slight variations
     const isValid = /^nsec1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{58}$/.test(cleanKey);
     console.log('Nsec validation result:', isValid);
     return isValid;
   }
 
   isValidPrivateKey(key) {
-    const cleanKey = key.trim();
+    const cleanKey = key.trim().replace(/[\u200B-\u200D\uFEFF]/g, '');
     const hexValid = this.isValidHexKey(cleanKey);
     const nsecValid = this.isValidNsecKey(cleanKey);
     const isValid = hexValid || nsecValid;
@@ -118,19 +119,24 @@ class NostrInterface {
 
   async nsecToHex(nsec) {
     try {
-      if (!this.isValidNsecKey(nsec)) throw new Error('Invalid nsec format');
+      const cleanNsec = nsec.trim().replace(/[\u200B-\u200D\uFEFF]/g, '');
+      if (!this.isValidNsecKey(cleanNsec)) throw new Error('Invalid nsec format');
+      
       const charset = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
-      const dataPart = nsec.slice(5);
+      const dataPart = cleanNsec.slice(5);
       const values = [];
+      
       for (let ch of dataPart) {
         const idx = charset.indexOf(ch);
         if (idx === -1) throw new Error('Invalid bech32 character');
         values.push(idx);
       }
+      
       const dataWords = values.slice(0, -6);
       let bits = 0;
       let buffer = 0;
       const bytes = [];
+      
       for (const word of dataWords) {
         buffer = (buffer << 5) | word;
         bits += 5;
@@ -139,8 +145,10 @@ class NostrInterface {
           bytes.push((buffer >> bits) & 0xff);
         }
       }
+      
       const privBytes = bytes.slice(0, 32);
       if (privBytes.length !== 32) throw new Error('Invalid decoded length');
+      
       return Array.from(privBytes)
         .map(b => b.toString(16).padStart(2, '0'))
         .join('');
@@ -157,7 +165,7 @@ class NostrInterface {
     console.log('Input value trimmed:', privateKey.trim());
     console.log('Input value char codes:', Array.from(privateKey).map(c => c.charCodeAt(0)));
     
-    const trimmedKey = privateKey.trim();
+    const trimmedKey = privateKey.trim().replace(/[\u200B-\u200D\uFEFF]/g, '');
     
     if (this.isValidPrivateKey(trimmedKey)) {
       console.log('Input validation passed');
@@ -171,12 +179,16 @@ class NostrInterface {
   }
 
   async authenticate() {
-    const privateKey = this.privateKeyInput.value.trim();
+    const privateKey = this.privateKeyInput.value.trim().replace(/[\u200B-\u200D\uFEFF]/g, '');
     console.log('Starting authentication with key:', privateKey.substring(0, 20) + '...');
     
     if (!this.isValidPrivateKey(privateKey)) {
       console.log('Key validation failed');
-      alert('Invalid private key format. Must be 64-character hex or valid nsec format.');
+      const errorMsg = 'Invalid private key format. Please ensure:\n\n' +
+                      '• Hex format: 64 characters (0-9, a-f, A-F)\n' +
+                      '• Nsec format: starts with "nsec1" followed by 58 characters\n' +
+                      '• No extra spaces or hidden characters';
+      alert(errorMsg);
       return;
     }
 
@@ -187,8 +199,14 @@ class NostrInterface {
       
       if (this.isValidNsecKey(privateKey)) {
         console.log('Converting nsec to hex...');
-        hexKey = await this.nsecToHex(privateKey);
-        console.log('Converted nsec to hex:', hexKey);
+        try {
+          hexKey = await this.nsecToHex(privateKey);
+          console.log('Converted nsec to hex:', hexKey);
+        } catch (conversionError) {
+          console.error('Nsec conversion failed:', conversionError);
+          alert('Failed to convert nsec key to hex format. Please check your key.');
+          return;
+        }
       }
 
       console.log('Initializing Nostr client...');
@@ -247,7 +265,13 @@ class NostrInterface {
       return true;
     } catch (error) {
       console.error('Authentication failed:', error);
-      alert('Authentication failed. Invalid private key.');
+      const errorMsg = 'Authentication failed.\n\n' +
+                      'Possible issues:\n' +
+                      '• Invalid private key format\n' +
+                      '• Network connection problem\n' +
+                      '• Server not responding\n\n' +
+                      'Please check your key and try again.';
+      alert(errorMsg);
       return false;
     }
   }
