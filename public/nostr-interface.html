@@ -29,43 +29,100 @@
             font-family: 'Courier New', monospace;
             font-size: 12px;
             word-break: break-all;
+            border: 2px solid #28a745;
         }
         
         .key-field {
             margin-bottom: 15px;
+            position: relative;
         }
         
         .key-field strong {
             display: block;
             margin-bottom: 5px;
             color: #333;
+            font-family: Arial, sans-serif;
+        }
+        
+        .key-value {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 8px;
+            border-radius: 4px;
+            position: relative;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            word-break: break-all;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            right: 5px;
+            top: 5px;
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+            transition: background 0.2s;
+        }
+        
+        .copy-btn:hover {
+            background: #0056b3;
+        }
+        
+        .copy-btn.copied {
+            background: #28a745;
         }
         
         .warning {
-            background-color: #fff3cd;
-            border: 1px solid #ffeaa7;
+            background: linear-gradient(45deg, #fff3cd, #ffeaa7);
+            border: 2px solid #ffc107;
             color: #856404;
-            padding: 12px;
+            padding: 15px;
             margin-bottom: 15px;
-            border-radius: 6px;
+            border-radius: 8px;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
         }
         
         .success-message {
-            background-color: #d4edda;
-            border: 1px solid #c3e6cb;
+            background: linear-gradient(45deg, #d4edda, #c3e6cb);
+            border: 2px solid #28a745;
             color: #155724;
             padding: 12px;
             margin: 15px 0;
             border-radius: 6px;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         
         .error-message {
-            background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
+            background: linear-gradient(45deg, #f8d7da, #f5c6cb);
+            border: 2px solid #dc3545;
             color: #721c24;
             padding: 12px;
             margin: 15px 0;
             border-radius: 6px;
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
         }
         
         .hidden {
@@ -120,6 +177,135 @@
             background-color: #f8f9fa;
             border-color: #4a90e2;
         }
+        
+        .primary-button {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .primary-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .secondary-button {
+            background: linear-gradient(45deg, #6c757d, #5a6268);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .secondary-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+                 .stat-value {
+             font-weight: bold;
+             color: #333;
+             display: block;
+         }
+         
+         /* Modal styles */
+         .save-modal {
+             position: fixed;
+             top: 0;
+             left: 0;
+             width: 100%;
+             height: 100%;
+             background: rgba(0,0,0,0.7);
+             display: flex;
+             justify-content: center;
+             align-items: center;
+             z-index: 1000;
+         }
+         
+         .modal-content {
+             background: white;
+             padding: 30px;
+             border-radius: 12px;
+             max-width: 500px;
+             width: 90%;
+             max-height: 80vh;
+             overflow-y: auto;
+         }
+         
+         .save-options {
+             display: grid;
+             grid-template-columns: 1fr 1fr;
+             gap: 15px;
+             margin: 20px 0;
+         }
+         
+         .save-option {
+             padding: 15px;
+             border: 2px solid #e1e5e9;
+             border-radius: 8px;
+             background: white;
+             cursor: pointer;
+             text-align: center;
+             transition: all 0.3s ease;
+         }
+         
+         .save-option:hover {
+             border-color: #007bff;
+             background: #f8f9fa;
+         }
+         
+         .save-option small {
+             display: block;
+             color: #666;
+             font-size: 12px;
+             margin-top: 5px;
+         }
+         
+         .file-options {
+             margin: 20px 0;
+             padding: 15px;
+             background: #f8f9fa;
+             border-radius: 8px;
+         }
+         
+         .file-options label {
+             display: block;
+             margin: 10px 0;
+         }
+         
+         .file-options input[type="text"] {
+             width: 100%;
+             padding: 8px;
+             border: 1px solid #ddd;
+             border-radius: 4px;
+         }
+         
+         .modal-actions {
+             display: flex;
+             gap: 10px;
+             justify-content: flex-end;
+             margin-top: 20px;
+         }
     </style>
 </head>
 <body>
@@ -158,23 +344,50 @@
                 </div>
                 
                 <div class="key-field">
-                    <strong>Public Key (npub):</strong>
-                    <span id="npubKey"></span>
+                    <strong>🔓 Public Key (npub):</strong>
+                    <div class="key-value">
+                        <span id="npubKey"></span>
+                        <button class="copy-btn" onclick="copyToClipboard('npubKey', this)">📋 Copy</button>
+                    </div>
                 </div>
                 
                 <div class="key-field">
-                    <strong>Private Key (nsec):</strong>
-                    <span id="nsecKey"></span>
+                    <strong>🔐 Private Key (nsec):</strong>
+                    <div class="key-value">
+                        <span id="nsecKey"></span>
+                        <button class="copy-btn" onclick="copyToClipboard('nsecKey', this)">📋 Copy</button>
+                    </div>
                 </div>
                 
                 <div class="key-field">
-                    <strong>Hex Public Key:</strong>
-                    <span id="hexPubKey"></span>
+                    <strong>🔓 Hex Public Key:</strong>
+                    <div class="key-value">
+                        <span id="hexPubKey"></span>
+                        <button class="copy-btn" onclick="copyToClipboard('hexPubKey', this)">📋 Copy</button>
+                    </div>
                 </div>
                 
                 <div class="key-field">
-                    <strong>Hex Private Key:</strong>
-                    <span id="hexPrivKey"></span>
+                    <strong>🔐 Hex Private Key:</strong>
+                    <div class="key-value">
+                        <span id="hexPrivKey"></span>
+                        <button class="copy-btn" onclick="copyToClipboard('hexPrivKey', this)">📋 Copy</button>
+                    </div>
+                </div>
+                
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <span class="stat-value" id="keyStrength">256-bit</span>
+                        <span>Security</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="keyTime">Just now</span>
+                        <span>Generated</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="keyFormat">Bech32</span>
+                        <span>Format</span>
+                    </div>
                 </div>
                 
                 <button class="primary-button" onclick="applyGeneratedKey()">
@@ -400,11 +613,35 @@
             document.getElementById('hexPubKey').textContent = currentKeyPair.publicKeyHex;
             document.getElementById('hexPrivKey').textContent = currentKeyPair.privateKeyHex;
             
+            // Update stats
+            document.getElementById('keyTime').textContent = new Date().toLocaleTimeString();
+            
             document.getElementById('generatedKeys').classList.remove('hidden');
             document.getElementById('saveKeysBtn').classList.remove('hidden');
             document.getElementById('hideKeysBtn').classList.remove('hidden');
             
-            showMessage('success', 'Keys generated successfully! Save them immediately.');
+            showMessage('success', '🎉 Keys generated successfully! Copy what you need and save immediately.');
+        }
+        
+        function copyToClipboard(elementId, button) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                // Visual feedback
+                button.textContent = '✅ Copied!';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.textContent = '📋 Copy';
+                    button.classList.remove('copied');
+                }, 2000);
+                
+                showMessage('success', `${elementId.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} copied to clipboard!`);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                showMessage('error', 'Failed to copy to clipboard. Please select and copy manually.');
+            });
         }
         
         function hideGeneratedKeys() {
@@ -426,35 +663,336 @@
             }, 2000);
         }
         
-        function saveToFile() {
+        async function saveToFile() {
             if (!currentKeyPair) return;
             
-            const keyData = {
-                generated: new Date().toISOString(),
-                warning: "NEVER SHARE YOUR PRIVATE KEY! Store this file securely.",
-                publicKey: {
-                    npub: currentKeyPair.npub,
-                    hex: currentKeyPair.publicKeyHex
-                },
-                privateKey: {
-                    nsec: currentKeyPair.nsec,
-                    hex: currentKeyPair.privateKeyHex,
-                    warning: "This gives full access to your Nostr identity. Keep it secret!"
+            // Try to use File System Access API for directory selection
+            if ('showDirectoryPicker' in window) {
+                try {
+                    const dirHandle = await window.showDirectoryPicker();
+                    await saveKeysToDirectory(dirHandle);
+                    return;
+                } catch (error) {
+                    if (error.name === 'AbortError') return;
+                    console.log('Directory picker cancelled, using download fallback');
                 }
-            };
+            }
             
-            const blob = new Blob([JSON.stringify(keyData, null, 2)], { type: 'application/json' });
+            // Fallback to regular download
+            saveAsDownload();
+        }
+        
+        async function saveKeysToDirectory(dirHandle) {
+            try {
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const filename = `nostr-keys-${timestamp}`;
+                
+                // Create main JSON file
+                const keyData = createKeyData();
+                const jsonHandle = await dirHandle.getFileHandle(`${filename}.json`, { create: true });
+                const jsonWritable = await jsonHandle.createWritable();
+                await jsonWritable.write(JSON.stringify(keyData, null, 2));
+                await jsonWritable.close();
+                
+                // Create readable text file
+                const txtHandle = await dirHandle.getFileHandle(`${filename}.txt`, { create: true });
+                const txtWritable = await txtHandle.createWritable();
+                await txtWritable.write(createReadableText());
+                await txtWritable.close();
+                
+                showMessage('success', '🎉 Keys saved to selected directory! Files: ' + filename + '.json, ' + filename + '.txt');
+                
+            } catch (error) {
+                console.error('Error saving to directory:', error);
+                showMessage('error', 'Error saving to directory. Please try again.');
+            }
+        }
+        
+        function saveAsDownload() {
+            const keyData = createKeyData();
+            const timestamp = Date.now();
+            
+            // Download JSON
+            downloadFile(JSON.stringify(keyData, null, 2), 'application/json', `nostr-keys-${timestamp}.json`);
+            
+            // Download text file
+            setTimeout(() => {
+                downloadFile(createReadableText(), 'text/plain', `nostr-keys-${timestamp}.txt`);
+            }, 100);
+            
+            showMessage('success', '💾 Key files downloaded! Check your Downloads folder.');
+        }
+        
+        function downloadFile(content, mimeType, filename) {
+            const blob = new Blob([content], { type: mimeType });
             const url = URL.createObjectURL(blob);
-            
             const a = document.createElement('a');
             a.href = url;
-            a.download = `nostr-keys-${Date.now()}.json`;
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+        }
+        
+        function showSaveModal() {
+            const modal = document.createElement('div');
+            modal.className = 'save-modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>💾 Save Nostr Keys</h3>
+                    <p>Choose how to save your keys securely:</p>
+                    
+                    <div class="save-options">
+                        <button class="save-option" onclick="saveAsJSON()">
+                            📄 JSON File
+                            <small>Structured data file</small>
+                        </button>
+                        
+                        <button class="save-option" onclick="saveAsTXT()">
+                            📝 Text File
+                            <small>Human-readable format</small>
+                        </button>
+                        
+                        <button class="save-option" onclick="saveAsQR()">
+                            📱 QR Codes
+                            <small>Visual backup format</small>
+                        </button>
+                        
+                        <button class="save-option" onclick="saveMultipleFormats()">
+                            📦 All Formats
+                            <small>Complete backup package</small>
+                        </button>
+                    </div>
+                    
+                    <div class="file-options">
+                        <label for="filename">Filename:</label>
+                        <input type="text" id="filename" value="nostr-keys-${Date.now()}" placeholder="Enter filename">
+                        
+                        <label>
+                            <input type="checkbox" id="includeTimestamp" checked> Include timestamp
+                        </label>
+                        
+                        <label>
+                            <input type="checkbox" id="includeBackup" checked> Create backup copy
+                        </label>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button onclick="closeSaveModal()" class="secondary-button">Cancel</button>
+                        <button onclick="saveWithDirectoryAPI()" class="primary-button">📁 Choose Directory</button>
+                    </div>
+                </div>
+            `;
             
-            showMessage('success', 'Keys saved to file. Store it securely on your USB drive.');
+            document.body.appendChild(modal);
+        }
+        
+        function closeSaveModal() {
+            const modal = document.querySelector('.save-modal');
+            if (modal) modal.remove();
+        }
+        
+        async function saveWithDirectoryAPI() {
+            try {
+                // Check if File System Access API is supported
+                if ('showDirectoryPicker' in window) {
+                    const dirHandle = await window.showDirectoryPicker();
+                    const filename = document.getElementById('filename').value || 'nostr-keys';
+                    const includeTimestamp = document.getElementById('includeTimestamp').checked;
+                    const includeBackup = document.getElementById('includeBackup').checked;
+                    
+                    const finalFilename = includeTimestamp ? 
+                        `${filename}-${new Date().toISOString().replace(/[:.]/g, '-')}` : 
+                        filename;
+                    
+                    await saveKeysToDirectory(dirHandle, finalFilename, includeBackup);
+                    closeSaveModal();
+                } else {
+                    // Fallback to regular download
+                    saveAsJSON();
+                    showMessage('info', 'Directory picker not supported. File saved to Downloads folder.');
+                }
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    console.error('Error saving to directory:', error);
+                    showMessage('error', 'Error accessing directory. Using fallback save method.');
+                    saveAsJSON();
+                }
+            }
+        }
+        
+        async function saveKeysToDirectory(dirHandle, filename, includeBackup) {
+            const keyData = createKeyData();
+            
+            try {
+                // Save JSON file
+                const jsonHandle = await dirHandle.getFileHandle(`${filename}.json`, { create: true });
+                const jsonWritable = await jsonHandle.createWritable();
+                await jsonWritable.write(JSON.stringify(keyData, null, 2));
+                await jsonWritable.close();
+                
+                // Save text file
+                const txtHandle = await dirHandle.getFileHandle(`${filename}.txt`, { create: true });
+                const txtWritable = await txtHandle.createWritable();
+                await txtWritable.write(createReadableText());
+                await txtWritable.close();
+                
+                if (includeBackup) {
+                    // Create backup folder
+                    const backupHandle = await dirHandle.getDirectoryHandle('nostr-backup', { create: true });
+                    
+                    // Save backup copies
+                    const backupJsonHandle = await backupHandle.getFileHandle(`${filename}-backup.json`, { create: true });
+                    const backupJsonWritable = await backupJsonHandle.createWritable();
+                    await backupJsonWritable.write(JSON.stringify(keyData, null, 2));
+                    await backupJsonWritable.close();
+                }
+                
+                showMessage('success', `🎉 Keys saved successfully to selected directory!<br>Files: ${filename}.json, ${filename}.txt${includeBackup ? ', backup folder created' : ''}`);
+                
+            } catch (error) {
+                console.error('Error writing files:', error);
+                showMessage('error', 'Error writing files to directory. Please check permissions.');
+            }
+        }
+        
+        function saveAsJSON() {
+            const keyData = createKeyData();
+            downloadFile(JSON.stringify(keyData, null, 2), 'application/json', '.json');
+            closeSaveModal();
+        }
+        
+        function saveAsTXT() {
+            const textData = createReadableText();
+            downloadFile(textData, 'text/plain', '.txt');
+            closeSaveModal();
+        }
+        
+        function saveAsQR() {
+            // Create QR code HTML
+            const qrHTML = createQRCodeHTML();
+            downloadFile(qrHTML, 'text/html', '.html');
+            closeSaveModal();
+        }
+        
+        function saveMultipleFormats() {
+            saveAsJSON();
+            setTimeout(() => saveAsTXT(), 100);
+            setTimeout(() => saveAsQR(), 200);
+            showMessage('success', '📦 All formats saved! Check your downloads folder for multiple files.');
+            closeSaveModal();
+        }
+        
+        function createKeyData() {
+            return {
+                version: "1.0",
+                generated: new Date().toISOString(),
+                device: navigator.userAgent,
+                warning: "🔐 CRITICAL SECURITY WARNING 🔐",
+                security_notice: [
+                    "NEVER share your private key with anyone",
+                    "Store this file in multiple secure locations",
+                    "Consider encrypting this file with a strong password",
+                    "Delete this file from unsecured devices after backing up"
+                ],
+                keys: {
+                    public: {
+                        npub: currentKeyPair.npub,
+                        hex: currentKeyPair.publicKeyHex,
+                        note: "Safe to share - this is your public identity"
+                    },
+                    private: {
+                        nsec: currentKeyPair.nsec,
+                        hex: currentKeyPair.privateKeyHex,
+                        warning: "🚨 NEVER SHARE THIS! Full access to your Nostr identity! 🚨"
+                    }
+                },
+                usage_guide: {
+                    "What is this?": "Your Nostr cryptographic key pair for decentralized social networking",
+                    "Public key (npub)": "Share this with others so they can find and verify you",
+                    "Private key (nsec)": "Keep this SECRET - it proves you own your identity",
+                    "How to use": "Import the private key into any Nostr client application"
+                }
+            };
+        }
+        
+                 function createReadableText() {
+             const text = `🔐 NOSTR KEY PAIR BACKUP 🔐
+Generated: ${new Date().toLocaleString()}
+Device: ${navigator.userAgent}
+
+⚠️ CRITICAL SECURITY WARNING ⚠️
+• NEVER share your private key with anyone
+• Store this file in multiple secure locations  
+• Consider encrypting this file with a strong password
+• Delete from unsecured devices after backing up
+
+📋 YOUR KEYS:
+
+🔓 PUBLIC KEY (safe to share):
+npub: ${currentKeyPair.npub}
+hex:  ${currentKeyPair.publicKeyHex}
+
+🔐 PRIVATE KEY (KEEP SECRET!):
+nsec: ${currentKeyPair.nsec}
+hex:  ${currentKeyPair.privateKeyHex}
+
+📖 USAGE GUIDE:
+• Public key: Share with others to be found on Nostr
+• Private key: Import into Nostr clients to access your account
+• Never type your private key into untrusted websites
+• Always verify you're on the correct website before entering keys
+
+🌐 NOSTR RESOURCES:
+• What is Nostr: https://nostr.com
+• Client apps: https://nostrapps.com
+• Relay list: https://nostr.watch
+
+Generated by EphemeraRelay Key Manager
+https://github.com/immasmiley/ephemerelay`;
+             return text;
+        }
+        
+                 function createQRCodeHTML() {
+            const html = '<!DOCTYPE html><html><head><title>Nostr Keys QR Codes</title>' +
+                '<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>' +
+                '<style>body{font-family:Arial,sans-serif;padding:20px;text-align:center}' +
+                '.qr-section{margin:30px 0;padding:20px;border:2px solid #ddd;border-radius:10px}' +
+                '.warning{background:#fff3cd;padding:15px;border-radius:5px;margin:20px 0}' +
+                'canvas{margin:10px}.key-text{font-family:monospace;word-break:break-all;background:#f8f9fa;padding:10px;border-radius:5px}' +
+                '</style></head><body><h1>🔐 Nostr Keys QR Codes</h1>' +
+                '<p>Generated: ' + new Date().toLocaleString() + '</p>' +
+                '<div class="warning">⚠️ <strong>WARNING:</strong> The private key QR code gives full access to your Nostr identity!<br>' +
+                'Only scan it into trusted devices and apps. Never share it publicly!</div>' +
+                '<div class="qr-section"><h2>🔓 Public Key (npub) - Safe to Share</h2>' +
+                '<canvas id="pubCanvas"></canvas><div class="key-text">' + currentKeyPair.npub + '</div></div>' +
+                '<div class="qr-section"><h2>🔐 Private Key (nsec) - KEEP SECRET!</h2>' +
+                '<canvas id="privCanvas"></canvas><div class="key-text">' + currentKeyPair.nsec + '</div></div>' +
+                '<script>QRCode.toCanvas(document.getElementById("pubCanvas"), "' + currentKeyPair.npub + '", {width:300});' +
+                'QRCode.toCanvas(document.getElementById("privCanvas"), "' + currentKeyPair.nsec + '", {width:300});</script>' +
+                '</body></html>';
+            return html;
+        }
+        
+        function downloadFile(content, mimeType, extension) {
+            const filename = document.getElementById('filename')?.value || 'nostr-keys';
+            const includeTimestamp = document.getElementById('includeTimestamp')?.checked ?? true;
+            
+            const finalFilename = includeTimestamp ? 
+                `${filename}-${Date.now()}${extension}` : 
+                `${filename}${extension}`;
+            
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = finalFilename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
         
         function toggleKeyVisibility() {
@@ -533,7 +1071,7 @@
             document.getElementById('publicKeyDisplay').textContent = publicKeyDisplay;
             document.getElementById('keyInfo').classList.remove('hidden');
             
-            showMessage('success', 'Successfully authenticated! You can now use all features.');
+            showMessage('success', '🎉 Successfully authenticated! All features are now unlocked. Welcome to EphemeraRelay!');
         }
         
         function showMessage(type, message) {
