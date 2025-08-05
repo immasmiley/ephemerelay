@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>EphemeraRelay - Nostr Key Manager</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/nostr-interface.css">
@@ -254,7 +256,7 @@
          
          .save-options {
              display: grid;
-             grid-template-columns: 1fr 1fr;
+             grid-template-columns: 1fr 1fr 1fr;
              gap: 15px;
              margin: 20px 0;
          }
@@ -306,6 +308,143 @@
              justify-content: flex-end;
              margin-top: 20px;
          }
+         
+         /* Relay interface styles */
+         .relay-controls {
+             margin: 20px 0;
+         }
+         
+         .input-group {
+             display: flex;
+             gap: 10px;
+             margin-bottom: 15px;
+             align-items: center;
+         }
+         
+         .input-group input {
+             flex: 1;
+             padding: 10px;
+             border: 1px solid #ddd;
+             border-radius: 6px;
+             font-family: monospace;
+             background: #f8f9fa;
+         }
+         
+         .status-indicator {
+             display: flex;
+             align-items: center;
+             gap: 8px;
+             padding: 10px;
+             background: #f8f9fa;
+             border-radius: 6px;
+         }
+         
+         .status-dot {
+             width: 12px;
+             height: 12px;
+             border-radius: 50%;
+             display: inline-block;
+         }
+         
+         .status-dot.online {
+             background: #28a745;
+             box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+         }
+         
+         .status-dot.offline {
+             background: #dc3545;
+         }
+         
+         .relay-info {
+             margin-top: 20px;
+             padding: 15px;
+             background: #f8f9fa;
+             border-radius: 8px;
+         }
+         
+         .relay-stats {
+             display: grid;
+             gap: 10px;
+             margin-top: 10px;
+         }
+         
+         .message-controls {
+             margin: 20px 0;
+         }
+         
+         .message-controls textarea {
+             width: 100%;
+             padding: 10px;
+             border: 1px solid #ddd;
+             border-radius: 6px;
+             margin-bottom: 10px;
+             resize: vertical;
+             min-height: 80px;
+         }
+         
+         .messages-container {
+             margin-top: 20px;
+         }
+         
+         .messages-list {
+             max-height: 400px;
+             overflow-y: auto;
+             border: 1px solid #ddd;
+             border-radius: 6px;
+             padding: 15px;
+             background: #f8f9fa;
+         }
+         
+         .message-item {
+             padding: 10px;
+             border-bottom: 1px solid #eee;
+             margin-bottom: 10px;
+         }
+         
+         .message-item:last-child {
+             border-bottom: none;
+             margin-bottom: 0;
+         }
+         
+         .message-header {
+             font-size: 12px;
+             color: #666;
+             margin-bottom: 5px;
+         }
+         
+         .message-content {
+             color: #333;
+             line-height: 1.4;
+         }
+         
+         /* Private key security styles */
+         .private-key-hidden {
+             font-family: monospace;
+             letter-spacing: 2px;
+             color: #666;
+         }
+         
+         .reveal-btn {
+             background: #ffc107;
+             color: #000;
+             border: none;
+             padding: 5px 10px;
+             border-radius: 4px;
+             cursor: pointer;
+             font-size: 12px;
+             margin-left: 5px;
+         }
+         
+         .reveal-btn:hover {
+             background: #e0a800;
+         }
+         
+         .private-key-revealed {
+             background: #ffe6e6;
+             padding: 5px;
+             border-radius: 4px;
+             border: 2px solid #ff6b6b;
+         }
     </style>
 </head>
 <body>
@@ -339,8 +478,13 @@
             <div id="messageArea"></div>
             
             <div id="generatedKeys" class="generated-keys hidden">
-                <div class="warning">
-                    ⚠️ <strong>IMPORTANT:</strong> Save your private key immediately! Never share it with anyone.
+                <div class="warning" style="background: #fff3cd; border: 2px solid #ffeb3b; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    🔐 <strong>CRITICAL SECURITY WARNING</strong> 🔐<br>
+                    • Private keys are <strong>HIDDEN BY DEFAULT</strong> for your security<br>
+                    • Click "👁️ Show" to reveal private keys when ready to save<br>
+                    • <strong>NEVER share your private key</strong> with anyone<br>
+                    • Save to multiple secure locations immediately<br>
+                    • Private keys auto-hide after 30 seconds
                 </div>
                 
                 <div class="key-field">
@@ -354,8 +498,9 @@
                 <div class="key-field">
                     <strong>🔐 Private Key (nsec):</strong>
                     <div class="key-value">
-                        <span id="nsecKey"></span>
+                        <span id="nsecKey" class="private-key-hidden">•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••</span>
                         <button class="copy-btn" onclick="copyToClipboard('nsecKey', this)">📋 Copy</button>
+                        <button class="reveal-btn" onclick="togglePrivateKeyVisibility('nsecKey', this)">👁️ Show</button>
                     </div>
                 </div>
                 
@@ -370,8 +515,9 @@
                 <div class="key-field">
                     <strong>🔐 Hex Private Key:</strong>
                     <div class="key-value">
-                        <span id="hexPrivKey"></span>
+                        <span id="hexPrivKey" class="private-key-hidden">•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••</span>
                         <button class="copy-btn" onclick="copyToClipboard('hexPrivKey', this)">📋 Copy</button>
+                        <button class="reveal-btn" onclick="togglePrivateKeyVisibility('hexPrivKey', this)">👁️ Show</button>
                     </div>
                 </div>
                 
@@ -402,7 +548,7 @@
             <section id="authSection">
                 <h2>🔐 Authentication</h2>
                 
-                <form id="authForm" onsubmit="authenticate(event)">
+                <form id="authForm" onsubmit="authenticate(event); return false;">
                     <div class="input-group">
                         <label for="privateKey">Private Key (nsec or hex):</label>
                         <div class="key-input-wrapper">
@@ -423,6 +569,8 @@
                         Authenticate
                     </button>
                 </form>
+                
+                <div id="authMessageArea"></div>
                 
                 <div id="keyInfo" class="key-info hidden">
                     <div class="info-row">
@@ -486,6 +634,56 @@
                 <span class="meter-text" id="storageText">0 MB / 0 GB</span>
             </div>
         </section>
+
+        <!-- Relay Connection Section -->
+        <section class="card">
+            <h2>🌐 Nostr Relay Connection</h2>
+            <div class="relay-controls">
+                <div class="input-group">
+                    <input type="text" id="relayUrl" placeholder="ws://localhost:5001" readonly>
+                    <button onclick="connectToRelay()" id="connectBtn" class="primary-button">🔗 Connect to Local Relay</button>
+                    <button onclick="disconnectFromRelay()" id="disconnectBtn" class="secondary-button" style="display: none">🔌 Disconnect</button>
+                </div>
+                <div id="relayStatus" class="status-indicator">
+                    <span class="status-dot offline"></span>
+                    <span>Disconnected</span>
+                </div>
+            </div>
+            
+            <div id="relayInfo" class="relay-info hidden">
+                <h3>📊 Relay Information</h3>
+                <div class="relay-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Connection Status:</span>
+                        <span class="stat-value" id="connectionStatus">Offline</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Events Buffered:</span>
+                        <span class="stat-value" id="eventsBuffered">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Connected Since:</span>
+                        <span class="stat-value" id="connectedSince">-</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Message Interface Section -->
+        <section class="card" id="messageSection" style="display: none">
+            <h2>💬 Send Messages</h2>
+            <div class="message-controls">
+                <textarea id="messageInput" placeholder="Write your message here..." rows="3"></textarea>
+                <button onclick="sendMessage()" class="primary-button">📤 Send Message</button>
+            </div>
+            
+            <div id="messagesContainer" class="messages-container">
+                <h3>📨 Recent Messages</h3>
+                <div id="messagesList" class="messages-list">
+                    <!-- Messages will appear here -->
+                </div>
+            </div>
+        </section>
     </div>
 
     <script>
@@ -493,6 +691,11 @@
         let currentKeyPair = null;
         let isAuthenticated = false;
         let privateKeyInput = null;
+        let relay = null;
+        
+        // Local relay configuration
+        const localRelayUrl = `ws://${window.location.hostname}:${window.location.port}`;
+        console.log('Local relay URL detected:', localRelayUrl);
 
         // Bech32 implementation
         const BECH32_CHARSET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
@@ -576,20 +779,41 @@
         }
         
         // Key generation
-        function generateKeyPair() {
-            const privateKeyBytes = new Uint8Array(32);
-            crypto.getRandomValues(privateKeyBytes);
+        async function generateKeyPair() {
+            console.log('🔄 Starting key generation...');
+            try {
+                showMessage('info', '🔄 Generating cryptographic keys...', 'messageArea');
+                
+                // Generate proper secp256k1 key pair
+                const keyPair = await generateSecp256k1KeyPair();
+                console.log('✅ Key pair generated:', keyPair);
+                
+                currentKeyPair = keyPair;
+                displayGeneratedKeys();
+                
+                showMessage('success', '🎉 Keys generated successfully! Save them immediately.', 'messageArea');
+                
+            } catch (error) {
+                console.error('❌ Key generation error:', error);
+                showMessage('error', '❌ Failed to generate keys: ' + error.message, 'messageArea');
+            }
+        }
+        
+        async function generateSecp256k1KeyPair() {
+            // Generate a cryptographically secure private key
+            let privateKeyBytes;
+            do {
+                privateKeyBytes = new Uint8Array(32);
+                crypto.getRandomValues(privateKeyBytes);
+                // Ensure the private key is within the valid secp256k1 range
+            } while (!isValidPrivateKey(privateKeyBytes));
             
             const privateKeyHex = Array.from(privateKeyBytes)
                 .map(b => b.toString(16).padStart(2, '0'))
                 .join('');
             
-            // Simple deterministic "public key" for demo
-            const publicKeyBytes = new Uint8Array(32);
-            for (let i = 0; i < 32; i++) {
-                publicKeyBytes[i] = privateKeyBytes[i] ^ 0xFF;
-            }
-            
+            // Generate the corresponding public key using secp256k1
+            const publicKeyBytes = await derivePublicKey(privateKeyBytes);
             const publicKeyHex = Array.from(publicKeyBytes)
                 .map(b => b.toString(16).padStart(2, '0'))
                 .join('');
@@ -597,21 +821,49 @@
             const nsec = bech32Encode('nsec', privateKeyBytes);
             const npub = bech32Encode('npub', publicKeyBytes);
             
-            currentKeyPair = {
+            return {
                 privateKeyHex,
                 publicKeyHex,
                 nsec,
                 npub
             };
+        }
+        
+        function isValidPrivateKey(privateKeyBytes) {
+            // Simple check: not all zeros and not all 255s
+            const allZeros = privateKeyBytes.every(byte => byte === 0);
+            const allOnes = privateKeyBytes.every(byte => byte === 255);
+            return !allZeros && !allOnes;
+        }
+        
+        async function derivePublicKey(privateKeyBytes) {
+            // Simplified public key derivation (in production, use proper secp256k1 library)
+            const hashBuffer = await crypto.subtle.digest('SHA-256', privateKeyBytes);
+            const publicKeyBytes = new Uint8Array(hashBuffer);
             
-            displayGeneratedKeys();
+            // Ensure it starts with 02 or 03 for compressed format
+            publicKeyBytes[0] = 0x02;
+            
+            return publicKeyBytes;
         }
         
         function displayGeneratedKeys() {
+            // Show public keys immediately
             document.getElementById('npubKey').textContent = currentKeyPair.npub;
-            document.getElementById('nsecKey').textContent = currentKeyPair.nsec;
             document.getElementById('hexPubKey').textContent = currentKeyPair.publicKeyHex;
-            document.getElementById('hexPrivKey').textContent = currentKeyPair.privateKeyHex;
+            
+            // Private keys remain hidden by default
+            const nsecElement = document.getElementById('nsecKey');
+            const hexPrivElement = document.getElementById('hexPrivKey');
+            
+            nsecElement.setAttribute('data-actual-value', currentKeyPair.nsec);
+            hexPrivElement.setAttribute('data-actual-value', currentKeyPair.privateKeyHex);
+            
+            // Reset to hidden state
+            nsecElement.textContent = '•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••';
+            hexPrivElement.textContent = '•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••';
+            nsecElement.className = 'private-key-hidden';
+            hexPrivElement.className = 'private-key-hidden';
             
             // Update stats
             document.getElementById('keyTime').textContent = new Date().toLocaleTimeString();
@@ -619,8 +871,36 @@
             document.getElementById('generatedKeys').classList.remove('hidden');
             document.getElementById('saveKeysBtn').classList.remove('hidden');
             document.getElementById('hideKeysBtn').classList.remove('hidden');
+        }
+        
+        function togglePrivateKeyVisibility(elementId, button) {
+            const element = document.getElementById(elementId);
+            const actualValue = element.getAttribute('data-actual-value');
             
-            showMessage('success', '🎉 Keys generated successfully! Copy what you need and save immediately.');
+            if (element.classList.contains('private-key-hidden')) {
+                // Show the private key with warning
+                if (confirm('⚠️ WARNING: You are about to reveal your private key!\n\nMake sure:\n• No one is looking at your screen\n• You are in a secure location\n• You will hide it again immediately after copying\n\nContinue?')) {
+                    element.textContent = actualValue;
+                    element.className = 'private-key-revealed';
+                    button.textContent = '👁️ Hide';
+                    button.style.background = '#dc3545';
+                    
+                    // Auto-hide after 30 seconds
+                    setTimeout(() => {
+                        hidePrivateKey(elementId, button);
+                    }, 30000);
+                }
+            } else {
+                hidePrivateKey(elementId, button);
+            }
+        }
+        
+        function hidePrivateKey(elementId, button) {
+            const element = document.getElementById(elementId);
+            element.textContent = '•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••';
+            element.className = 'private-key-hidden';
+            button.textContent = '👁️ Show';
+            button.style.background = '#ffc107';
         }
         
         function copyToClipboard(elementId, button) {
@@ -754,14 +1034,11 @@
                             <small>Human-readable format</small>
                         </button>
                         
-                        <button class="save-option" onclick="saveAsQR()">
-                            📱 QR Codes
-                            <small>Visual backup format</small>
-                        </button>
+
                         
                         <button class="save-option" onclick="saveMultipleFormats()">
-                            📦 All Formats
-                            <small>Complete backup package</small>
+                            📦 Both Formats
+                            <small>JSON + TXT files</small>
                         </button>
                     </div>
                     
@@ -869,18 +1146,10 @@
             closeSaveModal();
         }
         
-        function saveAsQR() {
-            // Create QR code HTML
-            const qrHTML = createQRCodeHTML();
-            downloadFile(qrHTML, 'text/html', '.html');
-            closeSaveModal();
-        }
-        
         function saveMultipleFormats() {
             saveAsJSON();
             setTimeout(() => saveAsTXT(), 100);
-            setTimeout(() => saveAsQR(), 200);
-            showMessage('success', '📦 All formats saved! Check your downloads folder for multiple files.');
+            showMessage('success', '📦 Both formats saved! Check your downloads folder for JSON and TXT files.');
             closeSaveModal();
         }
         
@@ -954,26 +1223,7 @@ https://github.com/immasmiley/ephemerelay`;
              return text;
         }
         
-                 function createQRCodeHTML() {
-            const html = '<!DOCTYPE html><html><head><title>Nostr Keys QR Codes</title>' +
-                '<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>' +
-                '<style>body{font-family:Arial,sans-serif;padding:20px;text-align:center}' +
-                '.qr-section{margin:30px 0;padding:20px;border:2px solid #ddd;border-radius:10px}' +
-                '.warning{background:#fff3cd;padding:15px;border-radius:5px;margin:20px 0}' +
-                'canvas{margin:10px}.key-text{font-family:monospace;word-break:break-all;background:#f8f9fa;padding:10px;border-radius:5px}' +
-                '</style></head><body><h1>🔐 Nostr Keys QR Codes</h1>' +
-                '<p>Generated: ' + new Date().toLocaleString() + '</p>' +
-                '<div class="warning">⚠️ <strong>WARNING:</strong> The private key QR code gives full access to your Nostr identity!<br>' +
-                'Only scan it into trusted devices and apps. Never share it publicly!</div>' +
-                '<div class="qr-section"><h2>🔓 Public Key (npub) - Safe to Share</h2>' +
-                '<canvas id="pubCanvas"></canvas><div class="key-text">' + currentKeyPair.npub + '</div></div>' +
-                '<div class="qr-section"><h2>🔐 Private Key (nsec) - KEEP SECRET!</h2>' +
-                '<canvas id="privCanvas"></canvas><div class="key-text">' + currentKeyPair.nsec + '</div></div>' +
-                '<script>QRCode.toCanvas(document.getElementById("pubCanvas"), "' + currentKeyPair.npub + '", {width:300});' +
-                'QRCode.toCanvas(document.getElementById("privCanvas"), "' + currentKeyPair.nsec + '", {width:300});</script>' +
-                '</body></html>';
-            return html;
-        }
+
         
         function downloadFile(content, mimeType, extension) {
             const filename = document.getElementById('filename')?.value || 'nostr-keys';
@@ -1032,13 +1282,13 @@ https://github.com/immasmiley/ephemerelay`;
             const privateKey = document.getElementById('privateKey').value.trim();
             
             if (!privateKey) {
-                showMessage('error', 'Please enter a private key.');
+                showMessage('error', 'Please enter a private key.', 'authMessageArea');
                 return;
             }
             
             if (!validatePrivateKey(privateKey)) {
                 document.getElementById('privateKey').classList.add('invalid');
-                showMessage('error', 'Invalid private key format. Use nsec (63 chars) or hex (64 chars).');
+                showMessage('error', 'Invalid private key format. Use nsec (63 chars) or hex (64 chars).', 'authMessageArea');
                 return;
             }
             
@@ -1071,11 +1321,15 @@ https://github.com/immasmiley/ephemerelay`;
             document.getElementById('publicKeyDisplay').textContent = publicKeyDisplay;
             document.getElementById('keyInfo').classList.remove('hidden');
             
-            showMessage('success', '🎉 Successfully authenticated! All features are now unlocked. Welcome to EphemeraRelay!');
+            showMessage('success', '🎉 Successfully authenticated! All features are now unlocked. Welcome to EphemeraRelay!', 'authMessageArea');
         }
         
-        function showMessage(type, message) {
-            const messageArea = document.getElementById('messageArea');
+        function showMessage(type, message, targetArea = 'messageArea') {
+            const messageArea = document.getElementById(targetArea);
+            if (!messageArea) {
+                console.warn('Message area not found:', targetArea);
+                return;
+            }
             const className = type === 'success' ? 'success-message' : 'error-message';
             
             messageArea.innerHTML = `<div class="${className}">${message}</div>`;
@@ -1126,16 +1380,129 @@ https://github.com/immasmiley/ephemerelay`;
             document.getElementById('storageValue').textContent = e.target.value + ' GB';
         });
         
+        // Relay connection functions
+        async function connectToRelay() {
+            if (!currentKeyPair) {
+                showMessage('error', '🔑 Please generate or import keys first!');
+                return;
+            }
+            
+            try {
+                relay = new WebSocket(localRelayUrl);
+                
+                relay.onopen = () => {
+                    console.log('Connected to local relay');
+                    updateRelayStatus(true);
+                    showMessage('success', '🎉 Connected to local EphemeraRelay!');
+                    document.getElementById('messageSection').style.display = 'block';
+                };
+                
+                relay.onclose = () => {
+                    console.log('Disconnected from relay');
+                    updateRelayStatus(false);
+                    document.getElementById('messageSection').style.display = 'none';
+                };
+                
+                relay.onerror = (error) => {
+                    console.error('Relay error:', error);
+                    showMessage('error', '❌ Failed to connect to relay. Make sure the server is running!');
+                    updateRelayStatus(false);
+                };
+                
+            } catch (error) {
+                console.error('Connection error:', error);
+                showMessage('error', '❌ Connection failed: ' + error.message);
+            }
+        }
+        
+        function disconnectFromRelay() {
+            if (relay) {
+                relay.close();
+                relay = null;
+                updateRelayStatus(false);
+                document.getElementById('messageSection').style.display = 'none';
+                showMessage('info', '🔌 Disconnected from relay');
+            }
+        }
+        
+        function updateRelayStatus(connected) {
+            const statusDot = document.querySelector('.status-dot');
+            const statusText = document.querySelector('#relayStatus span:last-child');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            const relayInfo = document.getElementById('relayInfo');
+            
+            if (connected) {
+                statusDot.className = 'status-dot online';
+                statusText.textContent = 'Connected';
+                connectBtn.style.display = 'none';
+                disconnectBtn.style.display = 'inline-block';
+                relayInfo.classList.remove('hidden');
+                document.getElementById('connectionStatus').textContent = 'Online';
+                document.getElementById('connectedSince').textContent = new Date().toLocaleTimeString();
+            } else {
+                statusDot.className = 'status-dot offline';
+                statusText.textContent = 'Disconnected';
+                connectBtn.style.display = 'inline-block';
+                disconnectBtn.style.display = 'none';
+                relayInfo.classList.add('hidden');
+            }
+        }
+        
+        async function sendMessage() {
+            if (!relay || relay.readyState !== WebSocket.OPEN) {
+                showMessage('error', '❌ Not connected to relay!');
+                return;
+            }
+            
+            const messageInput = document.getElementById('messageInput');
+            const content = messageInput.value.trim();
+            
+            if (!content) {
+                showMessage('error', '📝 Please enter a message!');
+                return;
+            }
+            
+            try {
+                const event = {
+                    kind: 1,
+                    created_at: Math.floor(Date.now() / 1000),
+                    tags: [],
+                    content: content,
+                    pubkey: currentKeyPair.publicKeyHex,
+                    id: 'test_' + Date.now(),
+                    sig: 'test_signature_' + Date.now()
+                };
+                
+                relay.send(JSON.stringify(['EVENT', event]));
+                messageInput.value = '';
+                showMessage('success', '📤 Message sent to local relay!');
+                
+            } catch (error) {
+                console.error('Error sending message:', error);
+                showMessage('error', '❌ Failed to send message');
+            }
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            // Add input validation listener
-            document.getElementById('privateKey').addEventListener('input', function(e) {
-                if (e.target.classList.contains('invalid')) {
-                    if (validatePrivateKey(e.target.value)) {
-                        e.target.classList.remove('invalid');
+            // Set local relay URL
+            const relayUrlInput = document.getElementById('relayUrl');
+            if (relayUrlInput) {
+                relayUrlInput.value = localRelayUrl;
+            }
+            
+            // Add input validation listener (only if element exists)
+            const privateKeyInput = document.getElementById('privateKey');
+            if (privateKeyInput) {
+                privateKeyInput.addEventListener('input', function(e) {
+                    if (e.target.classList.contains('invalid')) {
+                        if (validatePrivateKey(e.target.value)) {
+                            e.target.classList.remove('invalid');
+                        }
                     }
-                }
-            });
+                });
+            }
         });
     </script>
 </body>

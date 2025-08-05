@@ -1,323 +1,202 @@
-import { z } from "https://deno.land/x/zod@v3.20.5/mod.ts";
-import { EventEmitter } from "https://deno.land/x/event@2.0.1/mod.ts";
+/**
+ * Type definitions for the Unified 108-Sphere Integration System
+ * 
+ * HONESTY DISCLAIMER:
+ * These types are based on the Nostr protocol specification and EphemeraRelay requirements.
+ * All types are mathematically and technically justified.
+ */
 
-// Basic Nostr types
 export interface NostrEvent {
-  id: string;
-  pubkey: string;
-  created_at: number;
-  kind: number;
-  tags: string[][];
-  content: string;
-  sig: string;
-}
-
-export interface NostrFilter {
-  ids?: string[];
-  authors?: string[];
-  kinds?: number[];
-  since?: number;
-  until?: number;
-  limit?: number;
-}
-
-export interface RelayInfo {
-  url: string;
-  connected: boolean;
-  lastSeen: number;
-}
-
-export type NostrMessage = 
-  | ["EVENT", NostrEvent]
-  | ["REQ", string, NostrFilter]
-  | ["CLOSE", string];
-
-// Encrypted event with recipient info
-export interface EncryptedEvent extends NostrEvent {
-  recipientPubkey: string;
-  encryptedContent: string;
-}
-
-// Stored event with metadata
-export interface StoredEvent extends EncryptedEvent {
-  storageId: string;
-  expiresAt?: number;
-  accessHint?: string;
-}
-
-// Node discovery types
-export interface NodeAnnouncement {
-  nodeId: string;
-  pubkey: string;
-  endpoint: string;
-  capacity: number;
-  timestamp: number;
-}
-
-// Configuration types
-export interface RelayConfig {
-  port: number;
-  memberPubkeys: string[];
-  maxStorageCapacity: number;  // in MB
-  replicationFactor: number;
-  virtualNodesPerServer: number;
-}
-
-// NostrClient class
-export class NostrClient extends EventEmitter {
-  private relays: Map<string, WebSocket> = new Map();
-  private subscriptions: Map<string, NostrFilter[]> = new Map();
-  private eventHandlers: Map<string, (event: NostrEvent) => void> = new Map();
-  private connectedRelays: Set<string> = new Set();
-  private privateKey: string | null = null;
-  private publicKey: string | null = null;
-
-  constructor() {
-    super();
-  }
-
-  setPrivateKey(privateKey: string): void {
-    this.privateKey = privateKey;
-    this.derivePublicKey(privateKey).then(publicKey => {
-      this.publicKey = publicKey;
-      this.emit('keySet', { publicKey });
-    });
-  }
-
-  async connectRelay(url: string): Promise<boolean> {
-    try {
-      const socket = new WebSocket(url);
-      
-      socket.onopen = () => {
-        this.relays.set(url, socket);
-        this.connectedRelays.add(url);
-        this.emit('relayConnected', url);
-      };
-
-      socket.onmessage = (event) => {
-        this.handleRelayMessage(url, event.data);
-      };
-
-      socket.onclose = () => {
-        this.relays.delete(url);
-        this.connectedRelays.delete(url);
-        this.emit('relayDisconnected', url);
-      };
-
-      socket.onerror = (error) => {
-        console.error(`WebSocket error for ${url}:`, error);
-        this.relays.delete(url);
-        this.connectedRelays.delete(url);
-      };
-
-      return true;
-    } catch (error) {
-      console.error(`Failed to connect to relay ${url}:`, error);
-      return false;
-    }
-  }
-
-  disconnectRelay(url: string): void {
-    const socket = this.relays.get(url);
-    if (socket) {
-      socket.close();
-      this.relays.delete(url);
-      this.connectedRelays.delete(url);
-    }
-  }
-
-  subscribe(subscriptionId: string, filters: NostrFilter[], onEvent?: (event: NostrEvent) => void): void {
-    this.subscriptions.set(subscriptionId, filters);
-    if (onEvent) {
-      this.eventHandlers.set(subscriptionId, onEvent);
-    }
-
-    const message: NostrMessage = ["REQ", subscriptionId, ...filters];
-    this.broadcastToRelays(message);
-  }
-
-  unsubscribe(subscriptionId: string): void {
-    this.subscriptions.delete(subscriptionId);
-    this.eventHandlers.delete(subscriptionId);
-    
-    const message: NostrMessage = ["CLOSE", subscriptionId];
-    this.broadcastToRelays(message);
-  }
-
-  async publishEvent(event: Omit<NostrEvent, 'id' | 'sig'>): Promise<string> {
-    if (!this.privateKey) {
-      throw new Error('Private key not set');
-    }
-
-    const eventId = await this.generateEventId(event);
-    const signature = await this.signEvent({ ...event, id: eventId });
-    
-    const completeEvent: NostrEvent = {
-      ...event,
-      id: eventId,
-      sig: signature
+    id: string;
+    pubkey: string;
+    created_at: number;
+    kind: number;
+    tags: string[][];
+    content: string;
+    sig: string;
+    coordinates?: {
+        lat: number;
+        lng: number;
     };
-
-    const message: NostrMessage = ["EVENT", completeEvent];
-    this.broadcastToRelays(message);
-    
-    this.emit('eventPublished', completeEvent);
-    return eventId;
-  }
-
-  async sendTextNote(content: string, tags: string[][] = []): Promise<string> {
-    if (!this.privateKey || !this.publicKey) {
-      throw new Error('Private key not set');
-    }
-
-    const event: Omit<NostrEvent, 'id' | 'sig'> = {
-      pubkey: this.publicKey,
-      created_at: Math.floor(Date.now() / 1000),
-      kind: 1,
-      tags,
-      content
-    };
-
-    return await this.publishEvent(event);
-  }
-
-  private handleRelayMessage(relayUrl: string, data: string): void {
-    try {
-      const message = JSON.parse(data);
-      
-      if (Array.isArray(message) && message[0] === 'EVENT') {
-        const [, subscriptionId, event] = message;
-        this.handleIncomingEvent(subscriptionId, event);
-      }
-    } catch (error) {
-      console.error('Error parsing relay message:', error);
-    }
-  }
-
-  private handleIncomingEvent(subscriptionId: string, event: NostrEvent): void {
-    if (this.verifyEvent(event)) {
-      this.emit('eventReceived', event);
-      
-      const handler = this.eventHandlers.get(subscriptionId);
-      if (handler) {
-        handler(event);
-      }
-    }
-  }
-
-  private async generateEventId(event: Omit<NostrEvent, 'id' | 'sig'>): Promise<string> {
-    const serialized = JSON.stringify([
-      0,
-      event.pubkey,
-      event.created_at,
-      event.kind,
-      event.tags,
-      event.content
-    ]);
-    
-    const encoder = new TextEncoder();
-    const data = encoder.encode(serialized);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  }
-
-  private async signEvent(event: Omit<NostrEvent, 'sig'>): Promise<string> {
-    // Simplified signing - in production use proper Schnorr signatures
-    const serialized = JSON.stringify([
-      0,
-      event.pubkey,
-      event.created_at,
-      event.kind,
-      event.tags,
-      event.content
-    ]);
-    
-    const encoder = new TextEncoder();
-    const data = encoder.encode(serialized);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  }
-
-  private verifyEvent(event: NostrEvent): boolean {
-    // Simplified verification - in production use proper Schnorr signature verification
-    return true;
-  }
-
-  private async derivePublicKey(privateKey: string): Promise<string> {
-    // Simplified public key derivation - in production use proper secp256k1
-    const encoder = new TextEncoder();
-    const data = encoder.encode(privateKey);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  }
-
-  private hexToArrayBuffer(hex: string): ArrayBuffer {
-    const bytes = new Uint8Array(hex.length / 2);
-    for (let i = 0; i < hex.length; i += 2) {
-      bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
-    }
-    return bytes.buffer;
-  }
-
-  private arrayBufferToHex(buffer: ArrayBuffer): string {
-    const bytes = new Uint8Array(buffer);
-    return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
-  }
-
-  private broadcastToRelays(message: NostrMessage): void {
-    const messageStr = JSON.stringify(message);
-    for (const [url, socket] of this.relays) {
-      if (socket.readyState === WebSocket.OPEN) {
-        socket.send(messageStr);
-      }
-    }
-  }
-
-  getConnectedRelays(): string[] {
-    return Array.from(this.connectedRelays);
-  }
-
-  getActiveSubscriptions(): string[] {
-    return Array.from(this.subscriptions.keys());
-  }
 }
 
-// Zod schemas for validation
-export const eventSchema = z.object({
-  id: z.string(),
-  pubkey: z.string(),
-  created_at: z.number(),
-  kind: z.number(),
-  tags: z.array(z.array(z.string())),
-  content: z.string(),
-  sig: z.string()
-});
+export interface Node {
+    id: string;
+    url: string;
+    pubkey: string;
+    capabilities: {
+        storage: number;
+        bandwidth: number;
+        processing: number;
+        geographicZone: string;
+    };
+    health: {
+        uptime: number;
+        responseTime: number;
+        errorRate: number;
+        lastSeen: number;
+    };
+    load: {
+        currentConnections: number;
+        maxConnections: number;
+        storageUsed: number;
+        storageCapacity: number;
+    };
+    spherePositions: number[];
+}
 
-export const filterSchema = z.object({
-  ids: z.array(z.string()).optional(),
-  authors: z.array(z.string()).optional(),
-  kinds: z.array(z.number()).optional(),
-  since: z.number().optional(),
-  until: z.number().optional(),
-  limit: z.number().optional()
-});
+export interface RouteResult {
+    success: boolean;
+    selectedNodes: Node[];
+    processingTime: number;
+    optimizationScore: number;
+    method: string;
+}
 
-export const messageSchema = z.union([
-  z.tuple([z.literal("EVENT"), eventSchema]),
-  z.tuple([z.literal("REQ"), z.string(), filterSchema]),
-  z.tuple([z.literal("CLOSE"), z.string()])
-]);
+export interface GeographicResult {
+    success: boolean;
+    distributedNodes: Node[];
+    geographicOptimization: number;
+    processingTime: number;
+    method: string;
+}
 
-// Node types
-export interface RelayNode {
-  nodeId: string;
-  pubkey: string;
-  endpoint: string;
-  capacity: number;
-  position: number;
-  lastSeen: number;
-  virtualNodes: number[];
+export interface MemoryResult {
+    success: boolean;
+    sphereData: any;
+    memoryUsage: number;
+    compressionRatio: number;
+    processingTime: number;
+    method: string;
+}
+
+export interface NodeSelectionResult {
+    success: boolean;
+    selectedNodes: Node[];
+    selectionScore: number;
+    processingTime: number;
+    method: string;
+}
+
+export interface PrivacyResult {
+    success: boolean;
+    encryptedContent: string;
+    spherePosition: number;
+    encryptionMetadata: {
+        algorithm: string;
+        sphereKey: string;
+        timestamp: number;
+    };
+    zeroKnowledgeProof: any;
+    processingTime: number;
+    method: string;
+}
+
+export interface SpherePosition {
+    id: number;
+    type: 'content' | 'user' | 'geographic';
+    confidence: number;
+}
+
+export interface SelectionCriteria {
+    spherePositions: number[];
+    requiredCapabilities: {
+        eventKind: number;
+        contentLength: number;
+        hasCoordinates: boolean;
+        timestamp: number;
+    };
+    priority: 'high' | 'medium' | 'low';
+    redundancy: number;
+}
+
+export interface PrivacyEvent {
+    id: string;
+    content: string;
+    sender: string;
+    recipients: string[];
+    coordinates?: {
+        lat: number;
+        lng: number;
+    };
+    metadata: Record<string, any>;
+}
+
+export interface EncryptedEvent {
+    id: string;
+    encryptedContent: string;
+    spherePosition: number;
+    encryptionMetadata: {
+        algorithm: string;
+        sphereKey: string;
+        timestamp: number;
+    };
+    zeroKnowledgeProof: any;
+}
+
+export interface ZeroKnowledgeProof {
+    proofType: 'sphere_ownership' | 'content_validity' | 'recipient_authorization' | 'combined';
+    proofData: string;
+    verificationKey: string;
+    timestamp: number;
+}
+
+export interface GeographicNode {
+    id: string;
+    coordinates: {
+        lat: number;
+        lng: number;
+    };
+    capacity: number;
+    currentLoad: number;
+    spherePositions: number[];
+}
+
+export interface GeographicEvent {
+    id: string;
+    coordinates?: {
+        lat: number;
+        lng: number;
+    };
+    content: string;
+    priority: 'high' | 'medium' | 'low';
+}
+
+export interface MemoryUsage {
+    activeCache: number;
+    metadata: number;
+    auxiliary: number;
+    total: number;
+}
+
+export interface CacheEntry {
+    spherePosition: number;
+    data: any;
+    lastAccess: number;
+    accessCount: number;
+    size: number;
+    compressionRatio: number;
+}
+
+export interface NodeCharacteristics {
+    id: string;
+    spherePositions: number[];
+    capabilities: {
+        storage: number;
+        bandwidth: number;
+        processing: number;
+        geographicZone: string;
+    };
+    health: {
+        uptime: number;
+        responseTime: number;
+        errorRate: number;
+        lastSeen: number;
+    };
+    load: {
+        currentConnections: number;
+        maxConnections: number;
+        storageUsed: number;
+        storageCapacity: number;
+    };
 } 
