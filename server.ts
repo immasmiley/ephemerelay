@@ -77,7 +77,7 @@ async function handleNodeRegistration(req: Request): Promise<Response> {
   } catch (error) {
     return new Response(JSON.stringify({ 
       success: false, 
-      error: error.message 
+      error: error instanceof Error ? error.message : String(error) 
     }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' }
@@ -157,7 +157,7 @@ function connectStream(socket: WebSocket): void {
         handleEvent(msg[1]);
         return;
       case 'REQ':
-        handleReq(msg[1], msg.slice(2));
+        handleReq(msg[1], msg.slice(2) as Filter[]);
         return;
       case 'CLOSE':
         handleClose(msg[1]);
@@ -239,12 +239,10 @@ async function handleRequest(req: Request): Promise<Response> {
       break;
 
     case '/':
-      return new Response(await Deno.readFile('./public/index.html'), {
-        headers: { 'Content-Type': 'text/html' }
-      });
+      return Response.redirect('/nostr?v=687015161&_cache=false&t=1754343305.51213', 302);
 
     case '/nostr':
-      return new Response(await Deno.readFile('./public/nostr-interface.html'), {
+      return Response.redirect('/nostr?v=687015161&_cache=false&t=1754343305.51213', 302); {
         headers: { 
           'Content-Type': 'text/html',
           'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -306,3 +304,10 @@ serve(handleRequest, {
     console.log(`Server running at http://${hostname}:${port}/`);
   }
 });
+
+
+
+
+
+
+

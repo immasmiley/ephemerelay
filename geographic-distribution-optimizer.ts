@@ -105,7 +105,7 @@ export class GeographicDistributionOptimizer {
         const { lat, lng, level = this.currentLevel } = coordinate;
         
         // Quantize to level precision (mathematically justified)
-        const precision = this.coordinateLevels[level].precision;
+        const precision = this.coordinateLevels[level as keyof typeof this.coordinateLevels]?.precision || this.coordinateLevels[7].precision;
         const quantizedLat = Math.round(lat / precision) * precision;
         const quantizedLng = Math.round(lng / precision) * precision;
         
