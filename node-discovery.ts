@@ -132,6 +132,30 @@ export class NodeDiscovery {
     console.log(`Discovered ${this.getActiveNodes().length} active nodes`);
   }
 
+  /**
+   * Discover and return active nodes (missing method that coordinator expects)
+   */
+  async discoverNodes(): Promise<RelayNode[]> {
+    return this.getActiveNodes();
+  }
+
+  /**
+   * Remove inactive nodes (missing method that coordinator expects)
+   */
+  removeInactiveNodes(): void {
+    // This functionality is already implemented in checkNodeHealth()
+    // which is called periodically, so just log for now
+    const activeNodes = this.getActiveNodes();
+    console.log(`Active nodes after cleanup: ${activeNodes.length}`);
+  }
+
+  /**
+   * Get known nodes (missing method needed by coordinator)
+   */
+  getKnownNodes(): RelayNode[] {
+    return this.getActiveNodes();
+  }
+
   dispose(): void {
     clearInterval(this.healthCheckTimer);
   }

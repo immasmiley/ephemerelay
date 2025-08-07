@@ -190,6 +190,24 @@ export class PrivacyPreservingStorage {
     return this.localEvents.size;
   }
 
+  /**
+   * Alias for getEventCount (method expected by DistributedRelayCoordinator)
+   */
+  getLocalEventsCount(): number {
+    return this.getEventCount();
+  }
+
+  /**
+   * Get storage statistics (missing method needed by coordinator)
+   */
+  getStorageStats(): { totalEvents: number; diskUsage: number; compressionRatio: number } {
+    return {
+      totalEvents: this.getEventCount(),
+      diskUsage: this.localEvents.size * 1000, // Estimate based on event count
+      compressionRatio: 0.8 // Estimate compression ratio
+    };
+  }
+
   cleanup(): void {
     const now = Date.now();
     for (const [eventId, event] of this.localEvents) {

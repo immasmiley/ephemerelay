@@ -100,6 +100,23 @@ export class ConsistentHashRing {
     return new Set(this.nodes.values()).size;
   }
 
+  /**
+   * Get responsible nodes for a given key (missing method needed by coordinator)
+   */
+  getResponsibleNodes(key: string, count: number = 3): RelayNode[] {
+    return this.getNodes(key, count);
+  }
+
+  /**
+   * Get ring information (missing method needed by coordinator)
+   */
+  getRingInfo(): { totalNodes: number; virtualNodes: number } {
+    return {
+      totalNodes: this.getUniqueNodeCount(),
+      virtualNodes: this.sortedPositions.length
+    };
+  }
+
   private hash(key: string): number {
     let hash = 0;
     for (let i = 0; i < key.length; i++) {
